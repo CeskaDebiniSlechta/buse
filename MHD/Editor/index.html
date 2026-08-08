@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O projektu – Depot Editor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f0f2f5;
+            color: #222;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+        header {
+            background-color: #388e3c;
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        section {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #2e7d32;
+            font-size: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        p {
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .code-inline {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .box {
+            background-color: #f9f9f9;
+            border-left: 4px solid #388e3c;
+            padding: 15px;
+            border-radius: 0 6px 6px 0;
+            margin: 15px 0;
+        }
+
+        footer {
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 15px;
+            font-size: 13px;
+            color: #666;
+            border-top: 1px solid #ddd;
+        }
+
+        a {
+            color: #2e7d32;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Depot Editor – Dokumentace</h1>
+        <p>Návod k použití a přehled funkcí správce vozového parku</p>
+    </header>
+
+    <div class="content">
+        <!-- O čem to je -->
+        <section>
+            <h2>📌 O čem projekt je?</h2>
+            <p>
+                <strong>Depot Editor</strong> je webová aplikace určená ke správě a evidenci autobusového vozového parku. Umožňuje přehledně spravovat seznam vozidel, jejich provozní stavy, přiřazené řidiče i technické poznámky přímo z prohlížeče bez nutnosti stahovat jakýkoliv software.
+            </p>
+            <p>
+                Aplikace je vytvořena jako rychlá single-page aplikace (SPA), kterou lze snadno hostovat na <span class="badge">GitHub Pages</span>.
+            </p>
+        </section>
+
+        <!-- Jak to funguje -->
+        <section>
+            <h2>⚙️ Jak to funguje?</h2>
+            <p>
+                Veškerá práce s daty probíhá lokálně přímo ve vašem webovém prohlížeči:
+            </p>
+            <ul>
+                <li><strong>Automatické ukládání:</strong> Jakákoliv změna (úprava textu, změna stavu vozidla, přidání či smazání řádku) se okamžitě ukládá do paměti <span class="code-inline">localStorage</span>.</li>
+                <li><strong>Trvalost dat:</strong> Když stránku zavřete nebo obnovíte, o žádná data nepřijdete. Stránka si pamatuje rozpracovaný stav.</li>
+                <li><strong>Nezávislost na serveru:</strong> Pro provoz aplikace není potřeba žádná databáze ani backendový server.</li>
+            </ul>
+        </section>
+
+        <!-- Jak upravovat -->
+        <section>
+            <h2>✏️ Jak upravovat data?</h2>
+            <p>Úprava záznamů je navržena tak, aby byla co nejjednodušší:</p>
+            <ol>
+                <li><strong>Úprava údajů:</strong> Klikněte do jakéhokoliv políčka v tabulce (#, Type, Year, Registration atd.) a přepsáním změňte hodnotu.</li>
+                <li><strong>Změna stavu vozidla:</strong> Ve sloupci <em>Status</em> vyberte požadovaný stav z rozbalovací nabídky:
+                    <ul>
+                        <li><span class="badge" style="background: #4caf50; color: white;">V provozu</span> – Vozidlo je plně dostupné k lince.</li>
+                        <li><span class="badge" style="background: #ff9800; color: white;">Dílny</span> – Vozidlo je na údržbě nebo v opravě.</li>
+                        <li><span class="badge" style="background: #78909c; color: white;">Odstaven</span> – Vozidlo je dočasně odstaveno.</li>
+                        <li><span class="badge" style="background: #424242; color: white;">Vyřazen</span> – Vozidlo je trvale vyřazeno z provozu.</li>
+                        <li><span class="badge" style="background: #f44336; color: white;">Nedostupný</span> – Vozidlo nelze z jiných důvodů použít.</li>
+                    </ul>
+                </li>
+                <li><strong>Přidání autobusů:</strong> Tlačítkem <strong>+ Přidat autobus</strong> vytvoříte nový prázdný řádek na konci tabulky.</li>
+                <li><strong>Smazání řádku:</strong> Kliknutím na červené tlačítko <span class="code-inline">✕</span> na konci řádku konkrétní autobus odstraníte.</li>
+            </ol>
+        </section>
+
+        <!-- Jak exportovat -->
+        <section>
+            <h2>💾 Jak exportovat a zálohovat?</h2>
+            <div class="box">
+                <strong>Proč exportovat?</strong> Je dobré si data pravidelně zálohovat, abyste o ně nepřišli při vyčištění paměti prohlížeče nebo pokud chcete s daty pracovat na jiném zařízení.
+            </div>
+            <ul>
+                <li><strong>Export dat (Záloha):</strong> Stisknutím tlačítka <em>Exportovat do JSON</em> stáhnete aktuální stav tabulky do souboru ve vašem počítači nebo telefonu.</li>
+                <li><strong>Import dat:</strong> Pomocí tlačítka <em>Importovat JSON</em> můžete nahrát dříve uložený soubor a obnovit tak celou tabulku.</li>
+                <li><strong>Obnovení výchozích dat:</strong> Tlačítko <em>Obnovit výchozí data</em> smaže vaše změny a vrátí tabulku do původního továrního nastavení.</li>
+            </ul>
+        </section>
+    </div>
+
+    <footer>
+        <p>Projekt <strong>Depot Editor</strong> | Dostupný na <a href="https://karnikyt.github.io/depot-editor/editor" target="_blank">karnikyt.github.io/depot-editor/editor</a></p>
+    </footer>
+</div>
+
+</body>
+</html>
