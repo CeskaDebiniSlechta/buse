@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Depot Editor – Evidence autobusů</title>
+    <!-- Knihovna html2canvas pro export do PNG a JPG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 10px;
+            color: #333;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Hlavní zeleno-červená lišta */
+        .main-header {
+            background-color: #388e3c;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Ovládací lišta */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+
+        .btn-add { background-color: #2e7d32; color: white; }
+        .btn-select-mode { background-color: #007aff; color: white; } /* iOS styl modrá */
+        .btn-export { background-color: #0288d1; color: white; }
+        .btn-import { background-color: #7b1fa2; color: white; }
+        .btn-reset { background-color: #616161; color: white; }
+        .btn-toggle { background-color: #455a64; color: white; display: none; }
+
+        .btn-danger-action {
+            background-color: #ff3b30;
+            color: white;
+        }
+
+        .save-indicator {
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+            width: 100%;
+            text-align: right;
+        }
+
+        @media (min-width: 600px) {
+            .save-indicator { width: auto; }
+        }
+
+        /* Lišta hromadných akcí (iOS Soubory styl) */
+        .selection-bar {
+            display: none;
+            background-color: #e5f1ff;
+            border-bottom: 1px solid #b3d7ff;
+            padding: 8px 12px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.select-mode-active .selection-bar {
+            display: flex;
+        }
+
+        /* Desktopová tabulka */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            text-align: center;
+            min-width: 850px;
+        }
+
+        th {
+            background-color: #df6371;
+            color: white;
+            padding: 6px 4px;
+            font-weight: bold;
+            border: 1px dotted #bbbbbb;
+            white-space: nowrap;
+        }
+
+        td {
+            border: 1px dotted #bbbbbb;
+            padding: 2px 3px;
+            height: 32px;
+            vertical-align: middle;
+        }
+
+        td input[type="text"] {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 12px;
+            font-family: inherit;
+            outline: none;
+            padding: 0 2px;
+        }
+
+        td input[type="text"]:focus {
+            background-color: #e8f0fe;
+            border-radius: 2px;
+        }
+
+        /* Checkbox styling */
+        .checkbox-col {
+            width: 38px;
+            display: none;
+        }
+
+        body.select-mode-active .checkbox-col {
+            display: table-cell;
+        }
+
+        .custom-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #007aff;
+            cursor: pointer;
+        }
+
+        /* Styl tlačítka Status */
+        .status-select {
+            padding: 3px 6px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            outline: none;
+            text-align-last: center;
+            width: 100%;
+            max-width: 150px;
+            color: white;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        /* Barevné stavy */
+        .status-v-provozu   { background-color: #4caf50; color: white; }
+        .status-dilny       { background-color: #ff9800; color: white; }
+        .status-odstaven    { background-color: #78909c; color: white; }
+        .status-vyrazen     { background-color: #424242; color: white; }
+        .status-nedostupny  { background-color: #f44336; color: white; }
+
+        /* MOBILNÍ ZOBRAZENÍ KARET */
+        .cards-container {
+            display: none;
+            padding: 10px;
+            gap: 12px;
+            flex-direction: column;
+            background-color: #eaeff2;
+        }
+
+        .bus-card {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .bus-card.selected {
+            border: 2px solid #007aff;
+            background-color: #f0f7ff;
+        }
+
+        .bus-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #df6371;
+            padding-bottom: 6px;
+            margin-bottom: 4px;
+        }
+
+        .bus-card-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bus-card-title {
+            font-weight: bold;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .card-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .card-row label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            width: 90px;
+            flex-shrink: 0;
+        }
+
+        .card-row input[type="text"] {
+            flex-grow: 1;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .card-row .status-select {
+            flex-grow: 1;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            max-width: none;
+        }
+
+        /* Responzivní přechod pro malé displeje */
+        @media (max-width: 768px) {
+            .btn-toggle { display: inline-flex; }
+            
+            body.mobile-cards-mode .table-wrapper { display: none; }
+            body.mobile-cards-mode .cards-container { display: flex; }
+
+            body.mobile-table-mode .table-wrapper { display: block; }
+            body.mobile-table-mode .cards-container { display: none; }
+        }
+
+        /* SKRYTÝ KONTEJNER PRO PŘESNÝ EXPORT DO OBRÁZKU */
+        #exportContainer {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 1200px;
+            background: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        #exportContainer table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        #exportContainer th {
+            background-color: #df6371;
+            color: white;
+            padding: 8px 4px;
+            font-weight: bold;
+            border: 1px dotted #bbbbbb;
+        }
+
+        #exportContainer td {
+            border: 1px dotted #bbbbbb;
+            padding: 4px 6px;
+            height: 32px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        #exportContainer .export-status-badge {
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+            min-width: 120px;
+        }
+    </style>
+</head>
+<body class="mobile-cards-mode">
+
+<div class="container">
+    <div class="main-header">Buses</div>
+
+    <div class="controls">
+        <div class="btn-group">
+            <button class="btn btn-add" onclick="addRow()">+ Přidat</button>
+            <button class="btn btn-select-mode" id="btnSelectToggle" onclick="toggleSelectMode()">Vybrat</button>
+            <button class="btn btn-export" onclick="exportJSON()">💾 JSON</button>
+            <button class="btn btn-export" style="background-color: #2e7d32;" onclick="exportCSV()">📊 CSV</button>
+            <button class="btn btn-export" style="background-color: #e65100;" onclick="exportImage('png')">🖼️ PNG</button>
+            <button class="btn btn-export" style="background-color: #f57c00;" onclick="exportImage('jpeg')">🖼️ JPG</button>
+            <button class="btn btn-import" onclick="triggerImport()">📂 Import</button>
+            <button class="btn btn-reset" onclick="resetData()">↺ Obnovit</button>
+            <button class="btn btn-toggle" id="toggleViewBtn" onclick="toggleView()">📱 Změnit zobrazení</button>
+        </div>
+        <div class="save-indicator" id="saveStatus">Uloženo v localStorage</div>
+    </div>
+
+    <!-- Lišta hromadných akcí (iOS Soubory styl) -->
+    <div class="selection-bar">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn" style="background-color: #8e8e93; color: white;" onclick="selectAll(true)">Zaškrtnout vše</button>
+            <button class="btn" style="background-color: #8e8e93; color: white;" onclick="selectAll(false)">Zrušit výběr</button>
+        </div>
+        <div>
+            <button class="btn btn-danger-action" id="btnDeleteSelected" onclick="deleteSelected()" disabled>
+                🗑️ Smazat vybrané (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+    </div>
+
+    <!-- Skrytý vstup pro nahrání souboru při Importu -->
+    <input type="file" id="importInput" accept=".json" style="display: none;" onchange="importJSON(event)">
+
+    <!-- Tabulkový náhled (Desktop / Široký displej) -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th class="checkbox-col"></th>
+                    <th style="width: 45px;">#</th>
+                    <th style="width: 140px;">Type</th>
+                    <th style="width: 50px;">Year</th>
+                    <th style="width: 90px;">Registration</th>
+                    <th style="width: 45px;">Mode</th>
+                    <th style="width: 140px;">Status</th>
+                    <th>Assigned to</th>
+                    <th>Assigned with</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody id="busTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Kartový náhled (Ideální pro Mobily) -->
+    <div class="cards-container" id="busCardsContainer"></div>
+</div>
+
+<!-- Skrytá struktura určená výhradně pro generování PNG/JPG obrázku -->
+<div id="exportContainer">
+    <div class="main-header" style="background-color: #388e3c; color: white; text-align: center; padding: 12px; font-size: 24px; font-weight: bold; border-radius: 6px 6px 0 0;">Buses</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 45px;">#</th>
+                <th style="width: 160px;">Type</th>
+                <th style="width: 55px;">Year</th>
+                <th style="width: 100px;">Registration</th>
+                <th style="width: 50px;">Mode</th>
+                <th style="width: 160px;">Status</th>
+                <th>Assigned to</th>
+                <th>Assigned with</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody id="exportTableBody"></tbody>
+    </table>
+</div>
+
+<script>
+    const defaultData = [
+        { id: "148", type: "Irisbus Citelis 12", year: "2011", reg: "7T4 8155", mode: "D", status: "V provozu", assignedTo: "", assignedWith: "", notes: "" },
+        { id: "149", type: "Irisbus Citelis 12", year: "2011", reg: "7T4 8156", mode: "D", status: "Vyřazen", assignedTo: "x", assignedWith: "x", notes: "" },
+        { id: "150", type: "Irisbus Citelis 12", year: "2011", reg: "7T4 8157", mode: "D", status: "V provozu", assignedTo: "", assignedWith: "", notes: "" },
+        { id: "154", type: "Irisbus Citelis 12", year: "2011", reg: "7T4 8161", mode: "D", status: "V provozu", assignedTo: "Cardiak986", assignedWith: "", notes: "" },
+        { id: "155", type: "Irisbus Citelis 12", year: "2011", reg: "7T4 8162", mode: "D", status: "Odstaven", assignedTo: "x", assignedWith: "x", notes: "" },
+        { id: "162", type: "Iveco Urbanway 10.5", year: "2015", reg: "9T4 8273", mode: "CNG", status: "V provozu", assignedTo: "kokonaticekus", assignedWith: "", notes: "" },
+        { id: "168", type: "Iveco Urbanway 10.5", year: "2015", reg: "9T4 8279", mode: "CNG", status: "Vyřazen", assignedTo: "x", assignedWith: "x", notes: "" },
+        { id: "177", type: "SOR NSG 12", year: "2021", reg: "2TD 4579", mode: "CNG", status: "V provozu", assignedTo: "jk_jk", assignedWith: "jiricekczb", notes: "" },
+        { id: "204", type: "Karosa C 954E.1360", year: "2016", reg: "1TP 8390", mode: "D", status: "Dílny", assignedTo: "x", assignedWith: "x", notes: "Záloha" },
+        { id: "401", type: "SOR NS 12 electric", year: "2025", reg: "EL9 01EX", mode: "B", status: "V provozu", assignedTo: "Volvo7700Kromeriz", assignedWith: "", notes: "" }
+    ];
+
+    let fleet = [];
+    let isSelectMode = false;
+    let selectedIndices = new Set();
+
+    function loadData() {
+        const saved = localStorage.getItem('bus_fleet_data');
+        if (saved) {
+            fleet = JSON.parse(saved);
+        } else {
+            fleet = JSON.parse(JSON.stringify(defaultData));
+            saveData();
+        }
+        renderAll();
+    }
+
+    function saveData() {
+        localStorage.setItem('bus_fleet_data', JSON.stringify(fleet));
+        document.getElementById('saveStatus').innerText = "Uloženo: " + new Date().toLocaleTimeString();
+    }
+
+    function getStatusClass(status) {
+        switch (status) {
+            case "V provozu": return "status-v-provozu";
+            case "Dílny": return "status-dilny";
+            case "Odstaven": return "status-odstaven";
+            case "Vyřazen": return "status-vyrazen";
+            case "Nedostupný": return "status-nedostupny";
+            default: return "status-v-provozu";
+        }
+    }
+
+    /* PŘEPÍNÁNÍ REŽIMU VÝBĚRU (iOS Soubory) */
+    function toggleSelectMode() {
+        isSelectMode = !isSelectMode;
+        selectedIndices.clear();
+
+        const btn = document.getElementById('btnSelectToggle');
+        if (isSelectMode) {
+            document.body.classList.add('select-mode-active');
+            btn.innerText = "Hotovo";
+            btn.style.backgroundColor = "#34c759"; // iOS zelená pro Hotovo
+        } else {
+            document.body.classList.remove('select-mode-active');
+            btn.innerText = "Vybrat";
+            btn.style.backgroundColor = "#007aff";
+        }
+
+        updateSelectionUI();
+        renderAll();
+    }
+
+    function toggleSelectBus(index) {
+        if (selectedIndices.has(index)) {
+            selectedIndices.delete(index);
+        } else {
+            selectedIndices.add(index);
+        }
+        updateSelectionUI();
+        renderAll();
+    }
+
+    function selectAll(checkAll) {
+        if (checkAll) {
+            fleet.forEach((_, idx) => selectedIndices.add(idx));
+        } else {
+            selectedIndices.clear();
+        }
+        updateSelectionUI();
+        renderAll();
+    }
+
+    function updateSelectionUI() {
+        const count = selectedIndices.size;
+        document.getElementById('selectedCount').innerText = count;
+        const btnDelete = document.getElementById('btnDeleteSelected');
+        btnDelete.disabled = count === 0;
+        btnDelete.style.opacity = count === 0 ? "0.5" : "1";
+    }
+
+    function deleteSelected() {
+        if (selectedIndices.size === 0) return;
+
+        if (confirm(`Opravdu chcete smazat ${selectedIndices.size} vybraných vozidel?`)) {
+            // Seřadíme indexy sestupně, abychom mazáním nenarušili pořadí
+            const sortedIndices = Array.from(selectedIndices).sort((a, b) => b - a);
+            sortedIndices.forEach(idx => fleet.splice(idx, 1));
+            
+            selectedIndices.clear();
+            saveData();
+            updateSelectionUI();
+            renderAll();
+        }
+    }
+
+    function renderAll() {
+        renderTable();
+        renderCards();
+    }
+
+    /* Vykreslení Klasické Tabulky */
+    function renderTable() {
+        const tbody = document.getElementById('busTableBody');
+        tbody.innerHTML = '';
+
+        fleet.forEach((bus, index) => {
+            const isChecked = selectedIndices.has(index);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="checkbox-col">
+                    <input type="checkbox" class="custom-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectBus(${index})">
+                </td>
+                <td><input type="text" value="${bus.id || ''}" oninput="updateBus(${index}, 'id', this.value)"></td>
+                <td><input type="text" value="${bus.type || ''}" oninput="updateBus(${index}, 'type', this.value)"></td>
+                <td><input type="text" value="${bus.year || ''}" oninput="updateBus(${index}, 'year', this.value)"></td>
+                <td><input type="text" value="${bus.reg || ''}" oninput="updateBus(${index}, 'reg', this.value)"></td>
+                <td><input type="text" value="${bus.mode || ''}" oninput="updateBus(${index}, 'mode', this.value)"></td>
+                <td>
+                    <select class="status-select ${getStatusClass(bus.status)}" onchange="updateStatus(${index}, this)">
+                        <option value="V provozu" ${bus.status === 'V provozu' ? 'selected' : ''}>V provozu</option>
+                        <option value="Dílny" ${bus.status === 'Dílny' ? 'selected' : ''}>Dílny</option>
+                        <option value="Odstaven" ${bus.status === 'Odstaven' ? 'selected' : ''}>Odstaven</option>
+                        <option value="Vyřazen" ${bus.status === 'Vyřazen' ? 'selected' : ''}>Vyřazen</option>
+                        <option value="Nedostupný" ${bus.status === 'Nedostupný' ? 'selected' : ''}>Nedostupný</option>
+                    </select>
+                </td>
+                <td><input type="text" value="${bus.assignedTo || ''}" oninput="updateBus(${index}, 'assignedTo', this.value)"></td>
+                <td><input type="text" value="${bus.assignedWith || ''}" oninput="updateBus(${index}, 'assignedWith', this.value)"></td>
+                <td><input type="text" value="${bus.notes || ''}" oninput="updateBus(${index}, 'notes', this.value)"></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    /* Vykreslení Mobilních Karet */
+    function renderCards() {
+        const container = document.getElementById('busCardsContainer');
+        container.innerHTML = '';
+
+        fleet.forEach((bus, index) => {
+            const isChecked = selectedIndices.has(index);
+            const card = document.createElement('div');
+            card.className = `bus-card ${isChecked ? 'selected' : ''}`;
+
+            card.innerHTML = `
+                <div class="bus-card-header">
+                    <div class="bus-card-title-group">
+                        ${isSelectMode ? `<input type="checkbox" class="custom-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectBus(${index})">` : ''}
+                        <span class="bus-card-title">Autobus #${bus.id || '---'} (${bus.reg || 'bez RZ'})</span>
+                    </div>
+                </div>
+                <div class="card-row">
+                    <label>Ev. číslo (#):</label>
+                    <input type="text" value="${bus.id || ''}" oninput="updateBus(${index}, 'id', this.value)">
+                </div>
+                <div class="card-row">
+                    <label>Typ (Type):</label>
+                    <input type="text" value="${bus.type || ''}" oninput="updateBus(${index}, 'type', this.value)">
+                </div>
+                <div class="card-row">
+                    <label>Rok (Year):</label>
+                    <input type="text" value="${bus.year || ''}" oninput="updateBus(${index}, 'year', this.value)">
+                </div>
+                <div class="card-row">
+                    <label>SPZ (Registration):</label>
+                    <input type="text" value="${bus.reg || ''}" oninput="updateBus(${index}, 'reg', this.value)">
+                </div>
+                <div class="card-row">
+                    <label>Pohon (Mode):</label>
+                    <input type="text" value="${bus.mode || ''}" oninput="updateBus(${index}, 'mode', this.value)">
+                </div>
+                <div class="card-row">
+                    <label>Stav (Status):</label>
+                    <select class="status-select ${getStatusClass(bus.status)}" onchange="updateStatus(${index}, this)">
+                        <option value="V provozu" ${bus.status === 'V provozu' ? 'selected' : ''}>V provozu</option>
+                        <option value="Dílny" ${bus.status === 'Dílny' ? 'selected' : ''}>Dílny</option>
+                        <option value="Odstaven" ${bus.status === 'Odstaven' ? 'selected' : ''}>Odstaven</option>
+                        <option value="Vyřazen" ${bus.status === 'Vyřazen' ? 'selected' : ''}>Vyřazen</option>
+                        <option value="Nedostupný" ${bus.status === 'Nedostupný' ? 'selected' : ''}>Nedostupný</option>
+                    </select>
+                </div>
+                <div class="card-row">
+                    <label>Assigned to:</label>
+                    <input type="text" value="${bus.assignedTo || ''}" oninput="updateBus(${index}, 'assignedTo', this.value)">
+                </div>
+                <div class="card-row">
+                    <label>Assigned with:</label>
+                    <input type="text" value="${bus.assignedWith || ''}" oninput="updateBus(${index}, 'assignedWith', this.value)">
+                </div>
+                <div class="card-row">
+                    <label>Poznámka (Notes):</label>
+                    <input type="text" value="${bus.notes || ''}" oninput="updateBus(${index}, 'notes', this.value)">
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function updateBus(index, field, value) {
+        fleet[index][field] = value;
+        saveData();
+    }
+
+    function updateStatus(index, selectEl) {
+        const val = selectEl.value;
+        fleet[index].status = val;
+        saveData();
+        renderAll();
+    }
+
+    function addRow() {
+        fleet.unshift({
+            id: "", type: "", year: "", reg: "", mode: "D", status: "V provozu", assignedTo: "", assignedWith: "", notes: ""
+        });
+        saveData();
+        renderAll();
+    }
+
+    function resetData() {
+        if (confirm("Opravdu chcete obnovit výchozí data? Změny budou přepsány.")) {
+            fleet = JSON.parse(JSON.stringify(defaultData));
+            selectedIndices.clear();
+            if (isSelectMode) toggleSelectMode();
+            saveData();
+            renderAll();
+        }
+    }
+
+    /* PŘEPÍNAČ MOBILNÍHO ZOBRAZENÍ */
+    function toggleView() {
+        const body = document.body;
+        if (body.classList.contains('mobile-cards-mode')) {
+            body.classList.remove('mobile-cards-mode');
+            body.classList.add('mobile-table-mode');
+        } else {
+            body.classList.remove('mobile-table-mode');
+            body.classList.add('mobile-cards-mode');
+        }
+    }
+
+    /* EXPORT DO JSON */
+    function exportJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fleet, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `depot_fleet_backup_${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    /* EXPORT DO CSV (Excel) */
+    function exportCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+        csvContent += "#;Type;Year;Registration;Mode;Status;Assigned to;Assigned with;Notes\n";
+
+        fleet.forEach(bus => {
+            const row = [
+                `"${bus.id || ''}"`,
+                `"${bus.type || ''}"`,
+                `"${bus.year || ''}"`,
+                `"${bus.reg || ''}"`,
+                `"${bus.mode || ''}"`,
+                `"${bus.status || ''}"`,
+                `"${bus.assignedTo || ''}"`,
+                `"${bus.assignedWith || ''}"`,
+                `"${bus.notes || ''}"`
+            ].join(";");
+            csvContent += row + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `depot_fleet_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    /* DOKONALÝ EXPORT DO OBRÁZKU (PODLE OBRÁZKU 2) */
+    function exportImage(format) {
+        const exportTbody = document.getElementById('exportTableBody');
+        exportTbody.innerHTML = '';
+
+        fleet.forEach(bus => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${bus.id || ''}</td>
+                <td>${bus.type || ''}</td>
+                <td>${bus.year || ''}</td>
+                <td>${bus.reg || ''}</td>
+                <td>${bus.mode || ''}</td>
+                <td><span class="export-status-badge ${getStatusClass(bus.status)}">${bus.status || ''}</span></td>
+                <td>${bus.assignedTo || ''}</td>
+                <td>${bus.assignedWith || ''}</td>
+                <td>${bus.notes || ''}</td>
+            `;
+            exportTbody.appendChild(tr);
+        });
+
+        const element = document.getElementById('exportContainer');
+        const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+
+        html2canvas(element, {
+            scale: 2,
+            backgroundColor: "#ffffff",
+            logging: false
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `depot_fleet_${new Date().toISOString().slice(0,10)}.${format}`;
+            link.href = canvas.toDataURL(mimeType, 0.95);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            exportTbody.innerHTML = '';
+        });
+    }
+
+    /* IMPORT Z JSON */
+    function triggerImport() {
+        document.getElementById('importInput').click();
+    }
+
+    function importJSON(event) {
+        const fileReader = new FileReader();
+        fileReader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (Array.isArray(importedData)) {
+                    fleet = importedData;
+                    selectedIndices.clear();
+                    saveData();
+                    renderAll();
+                    alert("Data byla úspěšně importována!");
+                } else {
+                    alert("Soubor neobsahuje platná data vozového parku.");
+                }
+            } catch (err) {
+                alert("Chyba při čtení souboru: " + err.message);
+            }
+        };
+        if (event.target.files[0]) {
+            fileReader.readAsText(event.target.files[0]);
+        }
+    }
+
+    window.onload = loadData;
+</script>
+
+</body>
+</html>
