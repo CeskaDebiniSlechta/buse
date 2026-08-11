@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>vCompany – Správce Linek a Jízdních Řádů</title>
+    <!-- Knihovna html2canvas pro přímý export do PNG a JPG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #eef2f6;
+            padding: 10px;
+            color: #2c3e50;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #dcdfe6;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Lišta vCompany / MDPO Opava styl */
+        .main-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            text-align: center;
+            padding: 14px 10px;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Ovládací panel */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 7px 13px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        .btn-add { background-color: #2563eb; color: white; }
+        .btn-select-mode { background-color: #0284c7; color: white; }
+        .btn-export-png { background-color: #ea580c; color: white; }
+        .btn-export-jpg { background-color: #d97706; color: white; }
+        .btn-export-csv { background-color: #16a34a; color: white; }
+        .btn-export-json { background-color: #4f46e5; color: white; }
+        .btn-import { background-color: #9333ea; color: white; }
+        .btn-reset { background-color: #64748b; color: white; }
+        .btn-toggle { background-color: #334155; color: white; display: none; }
+
+        .btn-danger-action {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .save-indicator {
+            font-size: 12px;
+            color: #64748b;
+            font-style: italic;
+            width: 100%;
+            text-align: right;
+        }
+
+        @media (min-width: 700px) {
+            .save-indicator { width: auto; }
+        }
+
+        /* iOS Styl lišta výběru */
+        .selection-bar {
+            display: none;
+            background-color: #e0f2fe;
+            border-bottom: 1px solid #bae6fd;
+            padding: 8px 14px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.select-mode-active .selection-bar {
+            display: flex;
+        }
+
+        /* Tabulkový editor */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            text-align: left;
+            min-width: 950px;
+        }
+
+        th {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 8px 6px;
+            font-weight: 600;
+            border: 1px solid #334155;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        td {
+            border: 1px solid #cbd5e1;
+            padding: 4px 6px;
+            vertical-align: middle;
+            background: #ffffff;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
+        td input[type="text"] {
+            width: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            font-size: 12.5px;
+            font-family: inherit;
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: inherit;
+        }
+
+        td input[type="text"]:focus {
+            background-color: #ffffff;
+            border: 1px solid #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .line-badge-cell {
+            background: #e2e8f0;
+            font-weight: 800;
+            text-align: center;
+            border-radius: 6px;
+            padding: 3px 6px;
+            display: inline-block;
+            min-width: 45px;
+            color: #1e3c72;
+        }
+
+        /* Výluky / Odklony status */
+        .status-select {
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            font-size: 11.5px;
+            cursor: pointer;
+            outline: none;
+            text-align-last: center;
+            width: 100%;
+            color: white;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .status-standard  { background-color: #16a34a; }
+        .status-vyluka    { background-color: #dc2626; }
+        .status-odklon    { background-color: #ea580c; }
+        .status-posilova  { background-color: #2563eb; }
+
+        /* Checkbox sloupec */
+        .checkbox-col {
+            width: 40px;
+            text-align: center;
+            display: none;
+        }
+
+        body.select-mode-active .checkbox-col {
+            display: table-cell;
+        }
+
+        .custom-checkbox {
+            width: 19px;
+            height: 19px;
+            accent-color: #0284c7;
+            cursor: pointer;
+        }
+
+        /* Mobilní kartové zobrazení */
+        .cards-container {
+            display: none;
+            padding: 12px;
+            gap: 12px;
+            flex-direction: column;
+            background-color: #f1f5f9;
+        }
+
+        .line-card {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .line-card.selected {
+            border: 2px solid #0284c7;
+            background-color: #f0f9ff;
+        }
+
+        .card-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .card-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .card-field label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        .card-field input[type="text"] {
+            border: 1px solid #cbd5e1;
+            padding: 7px 9px;
+            border-radius: 6px;
+            font-size: 13.5px;
+        }
+
+        @media (max-width: 768px) {
+            .btn-toggle { display: inline-flex; }
+            body.mobile-cards-mode .table-wrapper { display: none; }
+            body.mobile-cards-mode .cards-container { display: flex; }
+            body.mobile-table-mode .table-wrapper { display: block; }
+            body.mobile-table-mode .cards-container { display: none; }
+        }
+
+        /* Skrytý kontejner pro export do obrázku */
+        #exportContainer {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 1250px;
+            background: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000;
+            padding: 16px;
+        }
+
+        .export-header {
+            background: #ffffff;
+            border-bottom: 3px solid #1e3c72;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .export-title {
+            font-size: 26px;
+            font-weight: 900;
+            color: #1e3c72;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .export-subtitle {
+            font-size: 12px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .export-opava-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .export-opava-table th {
+            background-color: #2b4c7e;
+            color: white;
+            padding: 8px 6px;
+            font-size: 12.5px;
+            font-weight: bold;
+            border: 1px solid #1b3254;
+            text-align: center;
+        }
+
+        .export-opava-table td {
+            border: 1px solid #94a3b8;
+            padding: 6px 8px;
+            vertical-align: middle;
+            color: #111;
+        }
+
+        .export-line-num {
+            font-size: 16px;
+            font-weight: 900;
+            color: #1e3c72;
+            text-align: center;
+        }
+
+        .export-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+
+        .export-times {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 12px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .export-footer {
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body class="mobile-cards-mode">
+
+<div class="container">
+    <div class="main-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span>🚏 vCompany – Správce Linek & Jízdních Řádů</span>
+        </div>
+        <span class="header-badge">Opava Style</span>
+    </div>
+
+    <!-- Ovládací lišta -->
+    <div class="controls">
+        <div class="btn-group">
+            <button class="btn btn-add" onclick="addLine()">+ Přidat linku</button>
+            <button class="btn btn-select-mode" id="btnSelectToggle" onclick="toggleSelectMode()">Vybrat</button>
+            <button class="btn btn-export-png" onclick="exportImage('png')">🖼️ PNG Tabule</button>
+            <button class="btn btn-export-jpg" onclick="exportImage('jpeg')">🖼️ JPG Tabule</button>
+            <button class="btn btn-export-json" onclick="exportJSON()">💾 JSON Záloha</button>
+            <button class="btn btn-export-csv" onclick="exportCSV()">📊 CSV</button>
+            <button class="btn btn-import" onclick="triggerImport()">📂 Import JSON</button>
+            <button class="btn btn-reset" onclick="resetData()">↺ Obnovit</button>
+            <button class="btn btn-toggle" id="toggleViewBtn" onclick="toggleView()">📱 Přepnout pohled</button>
+        </div>
+        <div class="save-indicator" id="saveStatus">Automaticky uloženo</div>
+    </div>
+
+    <!-- iOS Styl Lišta pro Hromadné Mazání -->
+    <div class="selection-bar">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn" style="background-color: #64748b; color: white;" onclick="selectAll(true)">Zaškrtnout vše</button>
+            <button class="btn" style="background-color: #64748b; color: white;" onclick="selectAll(false)">Zrušit výběr</button>
+        </div>
+        <div>
+            <button class="btn btn-danger-action" id="btnDeleteSelected" onclick="deleteSelected()" disabled>
+                🗑️ Smazat vybrané (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+    </div>
+
+    <input type="file" id="importInput" accept=".json" style="display: none;" onchange="importJSON(event)">
+
+    <!-- Tabulkový Editor -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th class="checkbox-col"></th>
+                    <th style="width: 70px;">Linka</th>
+                    <th style="width: 160px;">Spoje / Směr</th>
+                    <th style="width: 280px;">Trasa / Zastávky</th>
+                    <th style="width: 200px;">Časy odjezdů / příjezdů</th>
+                    <th style="width: 140px;">Stav / Režim</th>
+                    <th>Výluky / Odklony / Poznámka</th>
+                </tr>
+            </thead>
+            <tbody id="linesTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Mobilní Karty -->
+    <div class="cards-container" id="linesCardsContainer"></div>
+</div>
+
+<!-- Skrytý exportní kontejner -->
+<div id="exportContainer">
+    <div class="export-header">
+        <div>
+            <div class="export-title">PŘEHLED LINEK A ODJEZDŮ</div>
+            <div class="export-subtitle">vCompany Dopravní Systém • Formát zastávkových řádů MDPO</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-weight: bold; font-size: 14px; color: #1e3c72;">Zastávka: Centrální Terminál</div>
+            <div style="font-size: 11px; color: #64748b;" id="exportDate">Platnost: Aktuální</div>
+        </div>
+    </div>
+
+    <table class="export-opava-table">
+        <thead>
+            <tr>
+                <th style="width: 65px;">Linka</th>
+                <th style="width: 180px;">Spoje / Směr</th>
+                <th style="width: 320px;">Trasa / Zastávky</th>
+                <th style="width: 220px;">Časy odjezdů / Interval</th>
+                <th style="width: 130px;">Stav</th>
+                <th>Výluky a informace o odklonech</th>
+            </tr>
+        </thead>
+        <tbody id="exportTableBody"></tbody>
+    </table>
+
+    <div class="export-footer">
+        <span>Generováno systémem vCompany Timetable Editor</span>
+        <span>QR kód / Jízdní řády v reálném čase</span>
+    </div>
+</div>
+
+<script>
+    const defaultLines = [
+        {
+            line: "201",
+            trips: "Východní nádraží → Kylešovice",
+            stops: "Východní nádr. - Divadlo - Praskova - Kylešovice škola - Bílovecká",
+            times: "Prac. dny: 04:45, 05:15, 05:45... (int. 15-30m)",
+            status: "Standard",
+            alerts: "Bez omezení, bezbariérové spoje garantovány."
+        },
+        {
+            line: "203",
+            trips: "Globus → Jaktař",
+            stops: "Globus - Hypernova - Dolní náměstí - Nemocnice - Jaktař",
+            times: "05:10, 06:10, 07:10, 08:10... (int. 60m)",
+            status: "Standard",
+            alerts: "Všechny spoje zajíždí k OC Globus."
+        },
+        {
+            line: "204",
+            trips: "Englišova → Kylešovice",
+            stops: "Englišova - Zimní stadion - Dolní náměstí - Kylešovice",
+            times: "05:00 - 22:30 (Špička 12 min, sedlo 20 min)",
+            status: "Výluka",
+            alerts: "⚠️ Výluka: Zastávka Dolní náměstí dočasně přesunuta o 80m."
+        },
+        {
+            line: "208",
+            trips: "Východní nádraží → Malé Hoštice",
+            stops: "Východní nádr. - Těšínská - Malé Hoštice škola - Malé Hoštice",
+            times: "05:25, 06:25, 14:25, 15:25, 16:25",
+            status: "Odklon",
+            alerts: "🚧 Odklon po ul. Hlučínská z důvodu opravy mostu."
+        },
+        {
+            line: "213",
+            trips: "Centrální hřbitov → Kateřinky",
+            stops: "Centrální hřbitov - Horovo nám. - Divadlo - Kateřinky ZSJ",
+            times: "05:05 - 23:05 (každých 15 minut)",
+            status: "Standard",
+            alerts: "Provoz zajištěn nízkopodlažními trolejbusy / elektrobusy."
+        },
+        {
+            line: "218",
+            trips: "Divadlo → Chvalíkovice / Raduň",
+            stops: "Divadlo - Kylešovice - Raduň zámek - Chvalíkovice",
+            times: "05:40, 07:15, 13:40, 15:40, 17:15",
+            status: "Posilová",
+            alerts: "Posilový spoj v době školního vyučování."
+        }
+    ];
+
+    let lines = [];
+    let isSelectMode = false;
+    let selectedIndices = new Set();
+
+    function loadData() {
+        const saved = localStorage.getItem('vcompany_lines_data');
+        if (saved) {
+            lines = JSON.parse(saved);
+        } else {
+            lines = JSON.parse(JSON.stringify(defaultLines));
+            saveData();
+        }
+        renderAll();
+    }
+
+    function saveData() {
+        localStorage.setItem('vcompany_lines_data', JSON.stringify(lines));
+        document.getElementById('saveStatus').innerText = "Uloženo: " + new Date().toLocaleTimeString();
+    }
+
+    function getStatusClass(status) {
+        switch (status) {
+            case "Standard": return "status-standard";
+            case "Výluka": return "status-vyluka";
+            case "Odklon": return "status-odklon";
+            case "Posilová": return "status-posilova";
+            default: return "status-standard";
+        }
+    }
+
+    function renderAll() {
+        renderTable();
+        renderCards();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('linesTableBody');
+        tbody.innerHTML = '';
+
+        lines.forEach((item, index) => {
+            const isChecked = selectedIndices.has(index);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="checkbox-col">
+                    <input type="checkbox" class="custom-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectLine(${index})">
+                </td>
+                <td style="text-align: center;">
+                    <input type="text" style="font-weight: 800; text-align: center; color: #1e3c72;" value="${item.line || ''}" oninput="updateLine(${index}, 'line', this.value)">
+                </td>
+                <td><input type="text" value="${item.trips || ''}" oninput="updateLine(${index}, 'trips', this.value)"></td>
+                <td><input type="text" value="${item.stops || ''}" oninput="updateLine(${index}, 'stops', this.value)"></td>
+                <td><input type="text" value="${item.times || ''}" oninput="updateLine(${index}, 'times', this.value)"></td>
+                <td>
+                    <select class="status-select ${getStatusClass(item.status)}" onchange="updateStatus(${index}, this)">
+                        <option value="Standard" ${item.status === 'Standard' ? 'selected' : ''}>Standard</option>
+                        <option value="Výluka" ${item.status === 'Výluka' ? 'selected' : ''}>Výluka</option>
+                        <option value="Odklon" ${item.status === 'Odklon' ? 'selected' : ''}>Odklon</option>
+                        <option value="Posilová" ${item.status === 'Posilová' ? 'selected' : ''}>Posilová</option>
+                    </select>
+                </td>
+                <td><input type="text" value="${item.alerts || ''}" oninput="updateLine(${index}, 'alerts', this.value)"></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderCards() {
+        const container = document.getElementById('linesCardsContainer');
+        container.innerHTML = '';
+
+        lines.forEach((item, index) => {
+            const isChecked = selectedIndices.has(index);
+            const card = document.createElement('div');
+            card.className = `line-card ${isChecked ? 'selected' : ''}`;
+
+            card.innerHTML = `
+                <div class="card-header-row">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        ${isSelectMode ? `<input type="checkbox" class="custom-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectLine(${index})">` : ''}
+                        <span class="line-badge-cell">Linka ${item.line || '---'}</span>
+                    </div>
+                    <select class="status-select ${getStatusClass(item.status)}" style="width: 110px;" onchange="updateStatus(${index}, this)">
+                        <option value="Standard" ${item.status === 'Standard' ? 'selected' : ''}>Standard</option>
+                        <option value="Výluka" ${item.status === 'Výluka' ? 'selected' : ''}>Výluka</option>
+                        <option value="Odklon" ${item.status === 'Odklon' ? 'selected' : ''}>Odklon</option>
+                        <option value="Posilová" ${item.status === 'Posilová' ? 'selected' : ''}>Posilová</option>
+                    </select>
+                </div>
+                <div class="card-field">
+                    <label>Číslo Linky:</label>
+                    <input type="text" value="${item.line || ''}" oninput="updateLine(${index}, 'line', this.value)">
+                </div>
+                <div class="card-field">
+                    <label>Spoje / Směr:</label>
+                    <input type="text" value="${item.trips || ''}" oninput="updateLine(${index}, 'trips', this.value)">
+                </div>
+                <div class="card-field">
+                    <label>Zastávky (Trasa):</label>
+                    <input type="text" value="${item.stops || ''}" oninput="updateLine(${index}, 'stops', this.value)">
+                </div>
+                <div class="card-field">
+                    <label>Časy příjezdů / odjezdů:</label>
+                    <input type="text" value="${item.times || ''}" oninput="updateLine(${index}, 'times', this.value)">
+                </div>
+                <div class="card-field">
+                    <label>Výluky / Odklony:</label>
+                    <input type="text" value="${item.alerts || ''}" oninput="updateLine(${index}, 'alerts', this.value)">
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function updateLine(index, field, value) {
+        lines[index][field] = value;
+        saveData();
+    }
+
+    function updateStatus(index, selectEl) {
+        lines[index].status = selectEl.value;
+        saveData();
+        renderAll();
+    }
+
+    function addLine() {
+        lines.unshift({
+            line: "219",
+            trips: "Nové město → Terminál",
+            stops: "Nové město - Náměstí - Nemocnice - Terminál",
+            times: "06:00 - 20:00 (int. 30 min)",
+            status: "Standard",
+            alerts: "Bez omezení."
+        });
+        saveData();
+        renderAll();
+    }
+
+    function toggleSelectMode() {
+        isSelectMode = !isSelectMode;
+        selectedIndices.clear();
+
+        const btn = document.getElementById('btnSelectToggle');
+        if (isSelectMode) {
+            document.body.classList.add('select-mode-active');
+            btn.innerText = "Hotovo";
+            btn.style.backgroundColor = "#16a34a";
+        } else {
+            document.body.classList.remove('select-mode-active');
+            btn.innerText = "Vybrat";
+            btn.style.backgroundColor = "#0284c7";
+        }
+
+        updateSelectionUI();
+        renderAll();
+    }
+
+    function toggleSelectLine(index) {
+        if (selectedIndices.has(index)) {
+            selectedIndices.delete(index);
+        } else {
+            selectedIndices.add(index);
+        }
+        updateSelectionUI();
+        renderAll();
+    }
+
+    function selectAll(checkAll) {
+        if (checkAll) {
+            lines.forEach((_, idx) => selectedIndices.add(idx));
+        } else {
+            selectedIndices.clear();
+        }
+        updateSelectionUI();
+        renderAll();
+    }
+
+    function updateSelectionUI() {
+        const count = selectedIndices.size;
+        document.getElementById('selectedCount').innerText = count;
+        const btnDelete = document.getElementById('btnDeleteSelected');
+        btnDelete.disabled = count === 0;
+        btnDelete.style.opacity = count === 0 ? "0.5" : "1";
+    }
+
+    function deleteSelected() {
+        if (selectedIndices.size === 0) return;
+
+        if (confirm(`Opravdu chcete smazat ${selectedIndices.size} vybraných linek?`)) {
+            const sortedIndices = Array.from(selectedIndices).sort((a, b) => b - a);
+            sortedIndices.forEach(idx => lines.splice(idx, 1));
+            selectedIndices.clear();
+            saveData();
+            updateSelectionUI();
+            renderAll();
+        }
+    }
+
+    function resetData() {
+        if (confirm("Opravdu chcete obnovit výchozí linky? Změny budou přepsány.")) {
+            lines = JSON.parse(JSON.stringify(defaultLines));
+            selectedIndices.clear();
+            if (isSelectMode) toggleSelectMode();
+            saveData();
+            renderAll();
+        }
+    }
+
+    function toggleView() {
+        const body = document.body;
+        if (body.classList.contains('mobile-cards-mode')) {
+            body.classList.remove('mobile-cards-mode');
+            body.classList.add('mobile-table-mode');
+        } else {
+            body.classList.remove('mobile-table-mode');
+            body.classList.add('mobile-cards-mode');
+        }
+    }
+
+    function exportJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lines, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `vcompany_lines_${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function exportCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+        csvContent += "Linka;Spoje / Směr;Trasa / Zastávky;Časy odjezdů;Stav;Výluky a odklony\n";
+
+        lines.forEach(item => {
+            const row = [
+                `"${item.line || ''}"`,
+                `"${item.trips || ''}"`,
+                `"${item.stops || ''}"`,
+                `"${item.times || ''}"`,
+                `"${item.status || ''}"`,
+                `"${item.alerts || ''}"`
+            ].join(";");
+            csvContent += row + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `vcompany_lines_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    function exportImage(format) {
+        const exportTbody = document.getElementById('exportTableBody');
+        exportTbody.innerHTML = '';
+        document.getElementById('exportDate').innerText = "Exportováno: " + new Date().toLocaleDateString('cs-CZ');
+
+        lines.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="export-line-num">${item.line || ''}</td>
+                <td style="font-weight: bold; color: #1e3c72;">${item.trips || ''}</td>
+                <td>${item.stops || ''}</td>
+                <td class="export-times">${item.times || ''}</td>
+                <td style="text-align: center;"><span class="export-tag ${getStatusClass(item.status)}">${item.status || ''}</span></td>
+                <td style="color: ${item.status === 'Výluka' || item.status === 'Odklon' ? '#b91c1c' : '#334155'}; font-weight: ${item.status !== 'Standard' ? 'bold' : 'normal'};">${item.alerts || ''}</td>
+            `;
+            exportTbody.appendChild(tr);
+        });
+
+        const element = document.getElementById('exportContainer');
+        const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+
+        html2canvas(element, {
+            scale: 2,
+            backgroundColor: "#ffffff",
+            logging: false
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `vcompany_jizdni_rady_opava_${new Date().toISOString().slice(0,10)}.${format}`;
+            link.href = canvas.toDataURL(mimeType, 0.95);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            exportTbody.innerHTML = '';
+        });
+    }
+
+    function triggerImport() {
+        document.getElementById('importInput').click();
+    }
+
+    function importJSON(event) {
+        const fileReader = new FileReader();
+        fileReader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (Array.isArray(importedData)) {
+                    lines = importedData;
+                    selectedIndices.clear();
+                    saveData();
+                    renderAll();
+                    alert("Linky byly úspěšně importovány ze zálohy!");
+                } else {
+                    alert("Soubor neobsahuje platná data linek.");
+                }
+            } catch (err) {
+                alert("Chyba při čtení souboru: " + err.message);
+            }
+        };
+        if (event.target.files[0]) {
+            fileReader.readAsText(event.target.files[0]);
+        }
+    }
+
+    window.onload = loadData;
+</script>
+
+</body>
+</html>
