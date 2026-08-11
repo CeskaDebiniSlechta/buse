@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Editor linek – Projekty</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 Helvetica, Arial, sans-serif;
+    background: #f0f2f5;
+    padding: 10px;
+    color: #333;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.container {
+    max-width: 1500px;
+    margin: auto;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+
+/* HLAVIČKA */
+
+.main-header {
+    background: #1976d2;
+    color: white;
+    text-align: center;
+    padding: 14px;
+    font-size: 21px;
+    font-weight: bold;
+}
+
+/* OVLÁDÁNÍ */
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+}
+
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.btn {
+    padding: 7px 12px;
+    border: none;
+    border-radius: 7px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    transition: opacity .2s;
+}
+
+.btn:hover {
+    opacity: .9;
+}
+
+.btn-add {
+    background: #2e7d32;
+    color: white;
+}
+
+.btn-project {
+    background: #6a1b9a;
+    color: white;
+}
+
+.btn-select {
+    background: #007aff;
+    color: white;
+}
+
+.btn-json {
+    background: #0288d1;
+    color: white;
+}
+
+.btn-csv {
+    background: #388e3c;
+    color: white;
+}
+
+.btn-png {
+    background: #e65100;
+    color: white;
+}
+
+.btn-jpg {
+    background: #f57c00;
+    color: white;
+}
+
+.btn-reset {
+    background: #616161;
+    color: white;
+}
+
+.btn-toggle {
+    background: #455a64;
+    color: white;
+    display: none;
+}
+
+.btn-danger {
+    background: #ff3b30;
+    color: white;
+}
+
+.save-indicator {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+}
+
+/* PROJEKT */
+
+.project-panel {
+    padding: 10px;
+    background: #eef5ff;
+    border-bottom: 1px solid #c7dcff;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.project-panel label {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.project-panel select,
+.project-panel input {
+    padding: 7px;
+    border: 1px solid #bbb;
+    border-radius: 7px;
+    background: white;
+}
+
+.project-name {
+    font-weight: bold;
+    color: #1976d2;
+}
+
+/* VÝBĚR */
+
+.selection-bar {
+    display: none;
+    background: #e5f1ff;
+    border-bottom: 1px solid #b3d7ff;
+    padding: 8px 12px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+body.select-mode-active .selection-bar {
+    display: flex;
+}
+
+.checkbox-col {
+    width: 40px;
+    display: none;
+}
+
+body.select-mode-active .checkbox-col {
+    display: table-cell;
+}
+
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: #007aff;
+}
+
+/* TABULKA */
+
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+    font-size: 12px;
+    text-align: center;
+}
+
+th {
+    background: #1976d2;
+    color: white;
+    padding: 8px 5px;
+    border: 1px dotted #aaa;
+    white-space: nowrap;
+}
+
+td {
+    border: 1px dotted #bbb;
+    padding: 3px;
+    height: 36px;
+    vertical-align: middle;
+}
+
+td input,
+td textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+}
+
+td input {
+    height: 30px;
+}
+
+td textarea {
+    min-height: 50px;
+    resize: vertical;
+    padding: 5px;
+}
+
+td input:focus,
+td textarea:focus {
+    background: #e8f0fe;
+}
+
+/* KARTY */
+
+.cards-container {
+    display: none;
+    padding: 10px;
+    gap: 12px;
+    flex-direction: column;
+    background: #eaeff2;
+}
+
+.line-card {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,.05);
+}
+
+.line-card.selected {
+    border: 2px solid #007aff;
+    background: #f0f7ff;
+}
+
+.line-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #1976d2;
+    padding-bottom: 7px;
+    margin-bottom: 8px;
+}
+
+.line-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1976d2;
+}
+
+.card-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.card-row label {
+    width: 120px;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: bold;
+    color: #666;
+    padding-top: 7px;
+}
+
+.card-row input,
+.card-row textarea {
+    flex-grow: 1;
+    padding: 7px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.card-row textarea {
+    min-height: 70px;
+    resize: vertical;
+}
+
+/* MOBIL */
+
+@media (max-width: 768px) {
+
+    .btn-toggle {
+        display: inline-block;
+    }
+
+    body.mobile-cards-mode .table-wrapper {
+        display: none;
+    }
+
+    body.mobile-cards-mode .cards-container {
+        display: flex;
+    }
+
+    body.mobile-table-mode .table-wrapper {
+        display: block;
+    }
+
+    body.mobile-table-mode .cards-container {
+        display: none;
+    }
+}
+
+/* EXPORT */
+
+#exportContainer {
+    position: absolute;
+    left: -99999px;
+    top: -99999px;
+    width: 1300px;
+    background: white;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.export-header {
+    background: #1976d2;
+    color: white;
+    padding: 14px;
+    text-align: center;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.export-project {
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #eef5ff;
+}
+
+.export-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.export-table th {
+    background: #1976d2;
+    color: white;
+    padding: 8px;
+    border: 1px solid #aaa;
+}
+
+.export-table td {
+    padding: 7px;
+    border: 1px dotted #aaa;
+    text-align: center;
+    vertical-align: top;
+}
+
+.export-separator {
+    font-weight: bold;
+    text-align: center !important;
+    background: #f1f1f1;
+    font-size: 14px;
+    padding: 8px !important;
+}
+</style>
+</head>
+
+<body class="mobile-cards-mode">
+
+<div class="container">
+
+    <div class="main-header">
+        🚍 Editor linek
+    </div>
+
+    <div class="controls">
+
+        <div class="btn-group">
+
+            <button class="btn btn-add" onclick="addLine()">
+                + Přidat linku
+            </button>
+
+            <button class="btn btn-project" onclick="createProject()">
+                📁 Nový projekt
+            </button>
+
+            <button class="btn btn-select" onclick="toggleSelectMode()" id="selectButton">
+                Vybrat
+            </button>
+
+            <button class="btn btn-json" onclick="exportJSON()">
+                💾 JSON
+            </button>
+
+            <button class="btn btn-csv" onclick="exportCSV()">
+                📊 CSV
+            </button>
+
+            <button class="btn btn-png" onclick="exportImage('png')">
+                🖼️ PNG
+            </button>
+
+            <button class="btn btn-jpg" onclick="exportImage('jpeg')">
+                🖼️ JPG
+            </button>
+
+            <button class="btn btn-json" onclick="triggerImport()">
+                📂 Import JSON
+            </button>
+
+            <button class="btn btn-reset" onclick="resetProject()">
+                ↺ Obnovit
+            </button>
+
+            <button class="btn btn-toggle" onclick="toggleView()">
+                📱 Zobrazení
+            </button>
+
+        </div>
+
+        <div class="save-indicator" id="saveStatus">
+            Uloženo v localStorage
+        </div>
+
+    </div>
+
+    <!-- PROJEKTY -->
+
+    <div class="project-panel">
+
+        <label>📁 Projekt:</label>
+
+        <select id="projectSelect" onchange="changeProject()"></select>
+
+        <span class="project-name" id="projectName"></span>
+
+        <button class="btn btn-danger" onclick="deleteProject()">
+            🗑️ Smazat projekt
+        </button>
+
+    </div>
+
+    <!-- HROMADNÝ VÝBĚR -->
+
+    <div class="selection-bar">
+
+        <div>
+            <button class="btn" onclick="selectAll(true)">
+                Zaškrtnout vše
+            </button>
+
+            <button class="btn" onclick="selectAll(false)">
+                Zrušit výběr
+            </button>
+        </div>
+
+        <button
+            class="btn btn-danger"
+            id="deleteSelectedButton"
+            onclick="deleteSelected()"
+            disabled>
+            🗑️ Smazat vybrané
+            (<span id="selectedCount">0</span>)
+        </button>
+
+    </div>
+
+    <input
+        type="file"
+        id="importInput"
+        accept=".json"
+        style="display:none"
+        onchange="importJSON(event)"
+    >
+
+    <!-- TABULKA -->
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th class="checkbox-col"></th>
+
+                    <th style="width:70px">
+                        Linka
+                    </th>
+
+                    <th style="width:160px">
+                        Čas provozování
+                    </th>
+
+                    <th style="width:350px">
+                        Zastávky
+                    </th>
+
+                    <th style="width:300px">
+                        Dostupné vozy
+                    </th>
+
+                    <th style="width:300px">
+                        Výluky / odklony
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="lineTableBody"></tbody>
+
+        </table>
+
+    </div>
+
+    <!-- KARTY -->
+
+    <div
+        class="cards-container"
+        id="lineCardsContainer">
+    </div>
+
+</div>
+
+
+<!-- EXPORT -->
+
+<div id="exportContainer">
+
+    <div class="export-header">
+        🚍 Editor linek
+    </div>
+
+    <div
+        class="export-project"
+        id="exportProjectName">
+    </div>
+
+    <table class="export-table">
+
+        <thead>
+
+            <tr>
+
+                <th>Linka</th>
+                <th>Čas provozování</th>
+                <th>Zastávky</th>
+                <th>Dostupné vozy</th>
+                <th>Výluky / odklony</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody id="exportTableBody"></tbody>
+
+    </table>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   DATA
+========================================================= */
+
+let projects = {};
+
+let currentProject = "";
+
+let selectedIndices = new Set();
+
+let isSelectMode = false;
+
+
+/* =========================================================
+   NAČTENÍ DAT
+========================================================= */
+
+function loadData() {
+
+    const saved =
+        localStorage.getItem("line_editor_projects");
+
+    if (saved) {
+
+        try {
+
+            projects = JSON.parse(saved);
+
+        } catch {
+
+            projects = {};
+
+        }
+
+    }
+
+    /* Pokud není žádný projekt */
+
+    if (Object.keys(projects).length === 0) {
+
+        projects = {
+
+            "Moje linky": {
+
+                lines: [
+
+                    {
+                        line: "201",
+                        time: "05:00–23:30",
+                        stops:
+                            "Opava, Východní nádraží → Kylešovice → Bílovecká",
+                        vehicles:
+                            "SOR NS 12, Solaris Urbino 12",
+                        diversions:
+                            ""
+                    },
+
+                    {
+                        line: "202",
+                        time: "06:00–22:00",
+                        stops:
+                            "Opava, Divadlo → Kateřinky → Jaktař",
+                        vehicles:
+                            "Iveco Urbanway 12",
+                        diversions:
+                            ""
+                    }
+
+                ]
+
+            }
+
+        };
+
+        currentProject = "Moje linky";
+
+        saveData();
+
+    } else {
+
+        currentProject =
+            localStorage.getItem("line_editor_current_project");
+
+        if (!currentProject ||
+            !projects[currentProject]) {
+
+            currentProject =
+                Object.keys(projects)[0];
+
+        }
+
+    }
+
+    renderProjects();
+
+    renderAll();
+
+}
+
+
+/* =========================================================
+   ULOŽENÍ
+========================================================= */
+
+function saveData() {
+
+    localStorage.setItem(
+        "line_editor_projects",
+        JSON.stringify(projects)
+    );
+
+    localStorage.setItem(
+        "line_editor_current_project",
+        currentProject
+    );
+
+    document.getElementById("saveStatus").innerText =
+        "Uloženo: " +
+        new Date().toLocaleTimeString();
+
+}
+
+
+/* =========================================================
+   AKTUÁLNÍ LINKY
+========================================================= */
+
+function getLines() {
+
+    return projects[currentProject].lines;
+
+}
+
+
+/* =========================================================
+   PROJEKTY
+========================================================= */
+
+function renderProjects() {
+
+    const select =
+        document.getElementById("projectSelect");
+
+    select.innerHTML = "";
+
+    Object.keys(projects).forEach(name => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = name;
+        option.textContent = name;
+
+        if (name === currentProject) {
+
+            option.selected = true;
+
+        }
+
+        select.appendChild(option);
+
+    });
+
+    document.getElementById("projectName").innerText =
+        currentProject;
+
+}
+
+
+function changeProject() {
+
+    currentProject =
+        document.getElementById("projectSelect").value;
+
+    selectedIndices.clear();
+
+    saveData();
+
+    renderAll();
+
+}
+
+
+function createProject() {
+
+    const name =
+        prompt("Název nového projektu:");
+
+    if (!name) return;
+
+    if (projects[name]) {
+
+        alert("Projekt s tímto názvem už existuje.");
+
+        return;
+
+    }
+
+    projects[name] = {
+
+        lines: []
+
+    };
+
+    currentProject = name;
+
+    selectedIndices.clear();
+
+    saveData();
+
+    renderProjects();
+
+    renderAll();
+
+}
+
+
+function deleteProject() {
+
+    const names =
+        Object.keys(projects);
+
+    if (names.length <= 1) {
+
+        alert(
+            "Musí zůstat alespoň jeden projekt."
+        );
+
+        return;
+
+    }
+
+    if (!confirm(
+        `Opravdu chcete smazat projekt "${currentProject}"?`
+    )) {
+
+        return;
+
+    }
+
+    delete projects[currentProject];
+
+    currentProject =
+        Object.keys(projects)[0];
+
+    selectedIndices.clear();
+
+    saveData();
+
+    renderProjects();
+
+    renderAll();
+
+}
+
+
+/* =========================================================
+   VYKRESLENÍ
+========================================================= */
+
+function renderAll() {
+
+    renderTable();
+
+    renderCards();
+
+    updateSelectionUI();
+
+}
+
+
+/* =========================================================
+   TABULKA
+========================================================= */
+
+function renderTable() {
+
+    const tbody =
+        document.getElementById("lineTableBody");
+
+    tbody.innerHTML = "";
+
+    const lines = getLines();
+
+    lines.forEach((line, index) => {
+
+        const checked =
+            selectedIndices.has(index);
+
+        const tr =
+            document.createElement("tr");
+
+        tr.innerHTML = `
+
+            <td class="checkbox-col">
+
+                <input
+                    type="checkbox"
+                    class="custom-checkbox"
+                    ${checked ? "checked" : ""}
+                    onchange="toggleSelect(${index})"
+                >
+
+            </td>
+
+            <td>
+
+                <input
+                    type="text"
+                    value="${escapeHTML(line.line)}"
+                    oninput="updateLine(${index}, 'line', this.value)"
+                >
+
+            </td>
+
+            <td>
+
+                <input
+                    type="text"
+                    value="${escapeHTML(line.time)}"
+                    oninput="updateLine(${index}, 'time', this.value)"
+                >
+
+            </td>
+
+            <td>
+
+                <textarea
+                    oninput="updateLine(${index}, 'stops', this.value)"
+                >${escapeHTML(line.stops)}</textarea>
+
+            </td>
+
+            <td>
+
+                <textarea
+                    oninput="updateLine(${index}, 'vehicles', this.value)"
+                >${escapeHTML(line.vehicles)}</textarea>
+
+            </td>
+
+            <td>
+
+                <textarea
+                    oninput="updateLine(${index}, 'diversions', this.value)"
+                >${escapeHTML(line.diversions)}</textarea>
+
+            </td>
+
+        `;
+
+        tbody.appendChild(tr);
+
+    });
+
+}
+
+
+/* =========================================================
+   MOBILNÍ KARTY
+========================================================= */
+
+function renderCards() {
+
+    const container =
+        document.getElementById("lineCardsContainer");
+
+    container.innerHTML = "";
+
+    const lines = getLines();
+
+    lines.forEach((line, index) => {
+
+        const checked =
+            selectedIndices.has(index);
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "line-card " +
+            (checked ? "selected" : "");
+
+        card.innerHTML = `
+
+            <div class="line-card-header">
+
+                <div>
+
+                    ${
+                        isSelectMode
+                        ?
+                        `
+                        <input
+                            type="checkbox"
+                            class="custom-checkbox"
+                            ${checked ? "checked" : ""}
+                            onchange="toggleSelect(${index})"
+                        >
+                        `
+                        :
+                        ""
+                    }
+
+                    <span class="line-title">
+                        🚍 Linka ${escapeHTML(line.line || "---")}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-row">
+
+                <label>Linka:</label>
+
+                <input
+                    type="text"
+                    value="${escapeHTML(line.line)}"
+                    oninput="updateLine(${index}, 'line', this.value)"
+                >
+
+            </div>
+
+
+            <div class="card-row">
+
+                <label>Čas provozování:</label>
+
+                <input
+                    type="text"
+                    value="${escapeHTML(line.time)}"
+                    oninput="updateLine(${index}, 'time', this.value)"
+                >
+
+            </div>
+
+
+            <div class="card-row">
+
+                <label>Zastávky:</label>
+
+                <textarea
+                    oninput="updateLine(${index}, 'stops', this.value)"
+                >${escapeHTML(line.stops)}</textarea>
+
+            </div>
+
+
+            <div class="card-row">
+
+                <label>Dostupné vozy:</label>
+
+                <textarea
+                    oninput="updateLine(${index}, 'vehicles', this.value)"
+                >${escapeHTML(line.vehicles)}</textarea>
+
+            </div>
+
+
+            <div class="card-row">
+
+                <label>Výluky / odklony:</label>
+
+                <textarea
+                    oninput="updateLine(${index}, 'diversions', this.value)"
+                >${escapeHTML(line.diversions)}</textarea>
+
+            </div>
+
+        `;
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+/* =========================================================
+   ÚPRAVA LINKY
+========================================================= */
+
+function updateLine(index, field, value) {
+
+    getLines()[index][field] = value;
+
+    saveData();
+
+}
+
+
+/* =========================================================
+   PŘIDAT LINKU
+========================================================= */
+
+function addLine() {
+
+    getLines().unshift({
+
+        line: "",
+
+        time: "",
+
+        stops: "",
+
+        vehicles: "",
+
+        diversions: ""
+
+    });
+
+    saveData();
+
+    renderAll();
+
+}
+
+
+/* =========================================================
+   VÝBĚR
+========================================================= */
+
+function toggleSelectMode() {
+
+    isSelectMode = !isSelectMode;
+
+    selectedIndices.clear();
+
+    const button =
+        document.getElementById("selectButton");
+
+    if (isSelectMode) {
+
+        document.body.classList.add(
+            "select-mode-active"
+        );
+
+        button.innerText = "Hotovo";
+
+        button.style.background = "#34c759";
+
+    } else {
+
+        document.body.classList.remove(
+            "select-mode-active"
+        );
+
+        button.innerText = "Vybrat";
+
+        button.style.background = "#007aff";
+
+    }
+
+    renderAll();
+
+}
+
+
+function toggleSelect(index) {
+
+    if (selectedIndices.has(index)) {
+
+        selectedIndices.delete(index);
+
+    } else {
+
+        selectedIndices.add(index);
+
+    }
+
+    renderAll();
+
+}
+
+
+function selectAll(value) {
+
+    selectedIndices.clear();
+
+    if (value) {
+
+        getLines().forEach(
+            (_, index) =>
+                selectedIndices.add(index)
+        );
+
+    }
+
+    renderAll();
+
+}
+
+
+function updateSelectionUI() {
+
+    const count =
+        selectedIndices.size;
+
+    document.getElementById(
+        "selectedCount"
+    ).innerText = count;
+
+    const button =
+        document.getElementById(
+            "deleteSelectedButton"
+        );
+
+    button.disabled =
+        count === 0;
+
+    button.style.opacity =
+        count === 0 ? ".5" : "1";
+
+}
+
+
+function deleteSelected() {
+
+    if (selectedIndices.size === 0)
+        return;
+
+    if (!confirm(
+        `Opravdu chcete smazat ${selectedIndices.size} linek?`
+    )) {
+
+        return;
+
+    }
+
+    const sorted =
+        Array.from(selectedIndices)
+        .sort((a, b) => b - a);
+
+    sorted.forEach(index => {
+
+        getLines().splice(index, 1);
+
+    });
+
+    selectedIndices.clear();
+
+    saveData();
+
+    renderAll();
+
+}
+
+
+/* =========================================================
+   RESET PROJEKTU
+========================================================= */
+
+function resetProject() {
+
+    if (!confirm(
+        "Opravdu chcete vymazat všechny linky v tomto projektu?"
+    )) {
+
+        return;
+
+    }
+
+    projects[currentProject].lines = [];
+
+    selectedIndices.clear();
+
+    saveData();
+
+    renderAll();
+
+}
+
+
+/* =========================================================
+   MOBIL / TABULKA
+========================================================= */
+
+function toggleView() {
+
+    const body = document.body;
+
+    if (
+        body.classList.contains(
+            "mobile-cards-mode"
+        )
+    ) {
+
+        body.classList.remove(
+            "mobile-cards-mode"
+        );
+
+        body.classList.add(
+            "mobile-table-mode"
+        );
+
+    } else {
+
+        body.classList.remove(
+            "mobile-table-mode"
+        );
+
+        body.classList.add(
+            "mobile-cards-mode"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   JSON EXPORT
+========================================================= */
+
+function exportJSON() {
+
+    const data = {
+
+        project: currentProject,
+
+        lines: getLines()
+
+    };
+
+    const blob =
+        new Blob(
+            [
+                JSON.stringify(
+                    data,
+                    null,
+                    2
+                )
+            ],
+            {
+                type: "application/json"
+            }
+        );
+
+    downloadBlob(
+        blob,
+        `${safeFilename(currentProject)}_linky.json`
+    );
+
+}
+
+
+/* =========================================================
+   JSON IMPORT
+========================================================= */
+
+function triggerImport() {
+
+    document
+        .getElementById("importInput")
+        .click();
+
+}
+
+
+function importJSON(event) {
+
+    const file =
+        event.target.files[0];
+
+    if (!file)
+        return;
+
+    const reader =
+        new FileReader();
+
+    reader.onload = function(e) {
+
+        try {
+
+            const data =
+                JSON.parse(e.target.result);
+
+            let projectName =
+                data.project || file.name
+                    .replace(".json", "");
+
+            if (projects[projectName]) {
+
+                projectName +=
+                    " - import";
+
+            }
+
+            let lines = [];
+
+            /* Nový formát */
+
+            if (Array.isArray(data.lines)) {
+
+                lines = data.lines;
+
+            }
+
+            /* Podpora přímého pole */
+
+            else if (Array.isArray(data)) {
+
+                lines = data;
+
+            }
+
+            else {
+
+                throw new Error(
+                    "JSON neobsahuje platné linky."
+                );
+
+            }
+
+            projects[projectName] = {
+
+                lines: lines.map(line => ({
+
+                    line: line.line || "",
+
+                    time: line.time || "",
+
+                    stops: line.stops || "",
+
+                    vehicles: line.vehicles || "",
+
+                    diversions:
+                        line.diversions || ""
+
+                }))
+
+            };
+
+            currentProject = projectName;
+
+            selectedIndices.clear();
+
+            saveData();
+
+            renderProjects();
+
+            renderAll();
+
+            alert(
+                "Projekt byl úspěšně importován! 📂"
+            );
+
+        } catch(error) {
+
+            alert(
+                "Chyba při importu JSON:\n" +
+                error.message
+            );
+
+        }
+
+        event.target.value = "";
+
+    };
+
+    reader.readAsText(file);
+
+}
+
+
+/* =========================================================
+   CSV
+========================================================= */
+
+function exportCSV() {
+
+    let csv =
+        "\uFEFFLinka;Čas provozování;Zastávky;Dostupné vozy;Výluky / odklony\n";
+
+    getLines().forEach(line => {
+
+        csv += [
+
+            csvCell(line.line),
+
+            csvCell(line.time),
+
+            csvCell(line.stops),
+
+            csvCell(line.vehicles),
+
+            csvCell(line.diversions)
+
+        ].join(";") + "\n";
+
+    });
+
+    const blob =
+        new Blob(
+            [csv],
+            {
+                type: "text/csv;charset=utf-8"
+            }
+        );
+
+    downloadBlob(
+        blob,
+        `${safeFilename(currentProject)}_linky.csv`
+    );
+
+}
+
+
+/* =========================================================
+   PNG / JPG EXPORT
+========================================================= */
+
+function exportImage(format) {
+
+    const tbody =
+        document.getElementById(
+            "exportTableBody"
+        );
+
+    tbody.innerHTML = "";
+
+    document.getElementById(
+        "exportProjectName"
+    ).innerText =
+        "📁 Projekt: " + currentProject;
+
+    const lines =
+        getLines();
+
+    lines.forEach((line, index) => {
+
+        const tr =
+            document.createElement("tr");
+
+        tr.innerHTML = `
+
+            <td>
+                ${escapeHTML(line.line)}
+            </td>
+
+            <td>
+                ${escapeHTML(line.time)}
+            </td>
+
+            <td>
+                ${formatExportText(line.stops)}
+            </td>
+
+            <td>
+                ${formatExportText(line.vehicles)}
+            </td>
+
+            <td>
+                ${formatExportText(line.diversions)}
+            </td>
+
+        `;
+
+        tbody.appendChild(tr);
+
+
+        /*
+         * -------------------------------------------------
+         * -__-
+         * -------------------------------------------------
+         *
+         * Separator se vloží pod poslední řádek každé linky.
+         */
+
+        const separator =
+            document.createElement("tr");
+
+        separator.innerHTML = `
+
+            <td
+                colspan="5"
+                class="export-separator"
+            >
+                -__-
+            </td>
+
+        `;
+
+        tbody.appendChild(separator);
+
+    });
+
+
+    const element =
+        document.getElementById(
+            "exportContainer"
+        );
+
+    const mime =
+        format === "jpeg"
+        ? "image/jpeg"
+        : "image/png";
+
+
+    html2canvas(element, {
+
+        scale: 2,
+
+        backgroundColor: "#ffffff",
+
+        logging: false,
+
+        useCORS: true
+
+    }).then(canvas => {
+
+        const link =
+            document.createElement("a");
+
+        link.download =
+            `${safeFilename(currentProject)}_linky.${format}`;
+
+        link.href =
+            canvas.toDataURL(
+                mime,
+                .95
+            );
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        link.remove();
+
+        tbody.innerHTML = "";
+
+    });
+
+}
+
+
+/* =========================================================
+   POMOCNÉ FUNKCE
+========================================================= */
+
+function downloadBlob(blob, filename) {
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+
+    link.download = filename;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+function safeFilename(name) {
+
+    return name
+        .replace(/[\\/:*?"<>|]/g, "_")
+        .replace(/\s+/g, "_");
+
+}
+
+
+function csvCell(value) {
+
+    return `"${String(value || "")
+        .replace(/"/g, '""')
+        .replace(/\n/g, " ")}"`;
+
+}
+
+
+function formatExportText(value) {
+
+    return escapeHTML(value || "")
+        .replace(/\n/g, "<br>");
+
+}
+
+
+function escapeHTML(value) {
+
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+window.onload = loadData;
+
+</script>
+
+</body>
+</html>
