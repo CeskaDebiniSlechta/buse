@@ -3,395 +3,361 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BUSE 2-Řádkový Panel Simulator</title>
+  <title>BUSE 2-Řádkový Editor Panelu</title>
   <style>
-    :root {
-      --bg-color: #121212;
-      --panel-bg: #1e1e1e;
-      --accent: #00e676;
-      --text: #ffffff;
-    }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: Arial, sans-serif;
+      background-color: #1a1a1a;
+      color: #fff;
+      margin: 20px;
     }
-    h1 {
+    .panel-container {
+      background: #2b2b2b;
+      padding: 15px;
+      border-radius: 8px;
       margin-bottom: 20px;
-      font-size: 1.8rem;
-      color: var(--accent);
     }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      max-width: 1200px;
-      width: 100%;
-      justify-content: center;
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
     }
-    .controls {
-      background: var(--panel-bg);
-      padding: 20px;
-      border-radius: 10px;
-      flex: 1 1 320px;
-      max-width: 400px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-    .display-area {
-      flex: 2 1 600px;
-      background: var(--panel-bg);
-      padding: 20px;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-    .group {
-      margin-bottom: 15px;
+    .form-group {
+      margin-bottom: 12px;
     }
     label {
       display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-      font-size: 0.9rem;
+      margin-bottom: 4px;
+      font-weight: bold;
+      font-size: 13px;
     }
-    input[type="text"], input[type="number"], select, input[type="file"] {
+    input[type="text"], input[type="number"], select {
       width: 100%;
-      padding: 8px 12px;
-      border-radius: 5px;
-      border: 1px solid #333;
-      background: #2a2a2a;
+      padding: 6px;
+      background: #333;
+      border: 1px solid #555;
       color: #fff;
       box-sizing: border-box;
+      border-radius: 4px;
     }
-    .color-pickers {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .btn-row {
+      display: flex;
       gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
     }
-    input[type="color"] {
-      width: 100%;
-      height: 40px;
+    button {
+      background: #007acc;
+      color: white;
       border: none;
-      border-radius: 5px;
+      padding: 8px 14px;
+      border-radius: 4px;
       cursor: pointer;
-      background: none;
+      font-weight: bold;
     }
+    button:hover {
+      background: #005999;
+    }
+    .btn-green { background: #28a745; }
+    .btn-green:hover { background: #218838; }
+    .btn-orange { background: #fd7e14; }
+    .btn-orange:hover { background: #e06b0d; }
+    
     canvas {
-      border: 4px solid #333;
-      border-radius: 6px;
-      background-color: #050505;
+      border: 2px solid #555;
+      background-color: #000;
+      margin-top: 15px;
       max-width: 100%;
-      height: auto;
       image-rendering: pixelated;
     }
-    .font-info {
-      margin-top: 10px;
-      font-size: 0.85rem;
+    .status-bar {
+      font-size: 12px;
       color: #aaa;
-      word-break: break-all;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
 
-  <h1>BUSE 2-Řádkový Simulátor Panelu</h1>
+  <h2>BUSE 2-Řádkový Editor</h2>
 
-  <div class="container">
-    <div class="controls">
-      <div class="group">
-        <label for="hexFile">Importovat HEX Písmo (.hex)</label>
-        <input type="file" id="hexFile" accept=".hex,.txt">
-        <div class="font-info" id="fontStatus">Načteno výchozí generované písmo</div>
-      </div>
-
-      <div class="group">
-        <label for="line1">1. Řádek (Horní)</label>
-        <input type="text" id="line1" value="HLAVNÍ NÁDRAŽÍ">
-      </div>
-
-      <div class="group">
-        <label for="line2">2. Řádek (Dolní)</label>
-        <input type="text" id="line2" value="přes Centrum a Sídliště">
-      </div>
-
-      <div class="group">
-        <label for="align">Zarovnání / Výplň</label>
-        <select id="align">
-          <option value="left">Vlevo</option>
-          <option value="center" selected>Na střed</option>
-          <option value="right">Vpravo</option>
-        </select>
-      </div>
-
-      <div class="group">
-        <label>Barvy Panelu</label>
-        <div class="color-pickers">
-          <div>
-            <label style="font-size:0.8rem;">Svit (ON)</label>
-            <input type="color" id="colorOn" value="#ffb000">
-          </div>
-          <div>
-            <label style="font-size:0.8rem;">Zhasnutý (OFF)</label>
-            <input type="color" id="colorOff" value="#1a1400">
-          </div>
+  <div class="panel-container">
+    <div class="grid-2col">
+      <div>
+        <div class="form-group">
+          <label>1. Řádek (Horní)</label>
+          <input type="text" id="line1" value="HLAVNÍ NÁDRAŽÍ">
+        </div>
+        <div class="form-group">
+          <label>2. Řádek (Dolní)</label>
+          <input type="text" id="line2" value="přes Centrum">
+        </div>
+        <div class="form-group">
+          <label>Zarovnání textu</label>
+          <select id="align">
+            <option value="center" selected>Na střed</option>
+            <option value="left">Vlevo</option>
+            <option value="right">Vpravo</option>
+          </select>
         </div>
       </div>
 
-      <div class="group">
-        <label style="font-size:0.8rem;">Pozadí Matrice</label>
-        <input type="color" id="colorBg" value="#050505">
-      </div>
-
-      <div class="group">
-        <label>Rozměry Panelu (Body)</label>
-        <div style="display:flex; gap:10px;">
-          <div>
-            <label style="font-size:0.8rem;">Šířka</label>
-            <input type="number" id="cols" value="112" min="16" max="256">
+      <div>
+        <div class="form-group">
+          <label>Nahrát BUSE HEX Písmo (.hex)</label>
+          <input type="file" id="hexFile" accept=".hex,.txt">
+          <div class="status-bar" id="fontStatus">Aktivní: Výchozí generované písmo</div>
+        </div>
+        <div class="grid-2col">
+          <div class="form-group">
+            <label>Šířka (Sloupce)</label>
+            <input type="number" id="cols" value="112">
           </div>
-          <div>
-            <label style="font-size:0.8rem;">Výška</label>
-            <input type="number" id="rows" value="19" min="8" max="64">
+          <div class="form-group">
+            <label>Výška (Řádky)</label>
+            <input type="number" id="rows" value="19">
           </div>
-          <div>
-            <label style="font-size:0.8rem;">Velikost Bodu</label>
-            <input type="number" id="dotSize" value="4" min="1" max="10">
+        </div>
+        <div class="grid-2col">
+          <div class="form-group">
+            <label>Barva svitu</label>
+            <input type="color" id="colorOn" value="#ffb000" style="width:100%; height:30px; background:none; border:none;">
+          </div>
+          <div class="form-group">
+            <label>Velikost bodu (px)</label>
+            <input type="number" id="dotSize" value="3">
           </div>
         </div>
       </div>
     </div>
 
-    <div class="display-area">
-      <canvas id="buseCanvas"></canvas>
+    <div class="btn-row">
+      <button class="btn-green" id="btnExportPng">Exportovat do PNG</button>
+      <button class="btn-orange" id="btnSaveJson">Uložit projekt (JSON)</button>
+      <button class="btn-orange" onclick="document.getElementById('jsonFile').click()">Načíst projekt (JSON)</button>
+      <input type="file" id="jsonFile" accept=".json" style="display:none">
     </div>
   </div>
+
+  <canvas id="buseCanvas"></canvas>
 
   <script>
     const canvas = document.getElementById('buseCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Controls
     const line1Input = document.getElementById('line1');
     const line2Input = document.getElementById('line2');
     const alignSelect = document.getElementById('align');
-    const colorOnInput = document.getElementById('colorOn');
-    const colorOffInput = document.getElementById('colorOff');
-    const colorBgInput = document.getElementById('colorBg');
     const colsInput = document.getElementById('cols');
     const rowsInput = document.getElementById('rows');
+    const colorOnInput = document.getElementById('colorOn');
     const dotSizeInput = document.getElementById('dotSize');
     const hexFileInput = document.getElementById('hexFile');
     const fontStatus = document.getElementById('fontStatus');
 
-    let customFont = {};
+    let customFont = null;
 
-    // Intel HEX Parser
-    function parseIntelHex(hexText) {
+    // Bezpečný Intel HEX Parser
+    function parseHexFont(text) {
       const memory = new Uint8Array(65536);
-      const lines = hexText.split(/\r?\n/);
-      let fontName = "Importované HEX písmo";
+      const lines = text.split(/\r?\n/);
+      let loaded = false;
 
       for (let line of lines) {
         line = line.trim();
         if (!line.startsWith(':')) continue;
         
-        const len = parseInt(line.substr(1, 2), 16);
-        const addr = parseInt(line.substr(3, 4), 16);
-        const type = parseInt(line.substr(7, 2), 16);
+        const byteCount = parseInt(line.substring(1, 3), 16);
+        const address = parseInt(line.substring(3, 7), 16);
+        const recordType = parseInt(line.substring(7, 9), 16);
 
-        if (type === 0) { // Data Record
-          for (let i = 0; i < len; i++) {
-            memory[addr + i] = parseInt(line.substr(9 + i * 2, 2), 16);
+        if (recordType === 0) { // Data Record
+          for (let i = 0; i < byteCount; i++) {
+            memory[address + i] = parseInt(line.substring(9 + i * 2, 11 + i * 2), 16);
           }
+          loaded = true;
         }
       }
 
-      // Read BUSE Font Header string if present (FNT: ...)
-      let asciiHeader = "";
-      for (let i = 0x60; i < 0x80; i++) {
-        if (memory[i] >= 32 && memory[i] <= 126) {
-          asciiHeader += String.fromCharCode(memory[i]);
-        }
-      }
-      if (asciiHeader.includes("FNT:")) {
-        fontName = asciiHeader.trim();
-      }
+      if (!loaded) throw new Error("Soubor neobsahuje platný Intel HEX formát.");
 
-      return { memory, fontName };
-    }
-
-    // Process Hex Memory into Character Bitmaps
-    function extractGlyphs(memory) {
-      const glyphs = {};
-      // Common ASCII Range
-      for (let charCode = 32; charCode <= 255; charCode++) {
-        // Standard BUSE hex font offset mapping lookup
-        let offset = 0x80 + (charCode - 32) * 10;
-        let width = memory[offset] || 5;
-        if (width > 16 || width === 0) width = 5;
+      // Extrakce znaků BUSE struktury
+      const fontData = {};
+      for (let c = 32; c <= 255; c++) {
+        let offset = 0x80 + (c - 32) * 10;
+        let width = memory[offset];
+        if (width === 0 || width > 16) width = 5;
 
         let bitmap = [];
         for (let col = 0; col < width; col++) {
-          let byteVal = memory[offset + 1 + col] || 0;
-          bitmap.push(byteVal);
+          bitmap.push(memory[offset + 1 + col] || 0);
         }
-        glyphs[String.fromCharCode(charCode)] = { width, bitmap };
+        fontData[String.fromCharCode(c)] = { width, bitmap };
       }
-      return glyphs;
+      return fontData;
     }
 
-    // Built-in 5x7 Default Font Fallback
-    function drawDefaultChar(ctxGrid, char, startX, startY, colorOn) {
-      const font5x7 = {
-        'A': [0x7E, 0x09, 0x09, 0x09, 0x7E],
-        'B': [0x7F, 0x49, 0x49, 0x49, 0x36],
-        'C': [0x3E, 0x41, 0x41, 0x41, 0x22],
-        'D': [0x7F, 0x41, 0x41, 0x22, 0x1C],
-        'E': [0x7F, 0x49, 0x49, 0x49, 0x41],
-        'F': [0x7F, 0x09, 0x09, 0x09, 0x01],
-        'H': [0x7F, 0x08, 0x08, 0x08, 0x7F],
-        'I': [0x41, 0x7F, 0x41],
-        'L': [0x7F, 0x40, 0x40, 0x40, 0x40],
-        'N': [0x7F, 0x04, 0x08, 0x10, 0x7F],
-        'O': [0x3E, 0x41, 0x41, 0x41, 0x3E],
-        'R': [0x7F, 0x09, 0x19, 0x29, 0x46],
-        'S': [0x26, 0x49, 0x49, 0x49, 0x32],
-        'V': [0x1F, 0x20, 0x40, 0x20, 0x1F],
-        'Z': [0x61, 0x51, 0x49, 0x45, 0x43],
-        'á': [0x20, 0x54, 0x54, 0x54, 0x78],
-        'í': [0x00, 0x44, 0x7D, 0x40, 0x00],
-        'ě': [0x38, 0x55, 0x55, 0x55, 0x18],
-        's': [0x28, 0x44, 0x44, 0x44, 0x28],
-        ' ': [0x00, 0x00, 0x00]
-      };
+    // Vykreslování
+    function render() {
+      const cols = parseInt(colsInput.value) || 112;
+      const rows = parseInt(rowsInput.value) || 19;
+      const dotSize = parseInt(dotSizeInput.value) || 3;
+      const gap = 1;
 
-      const pattern = font5x7[char] || font5x7[char.toUpperCase()] || [0x7F, 0x41, 0x41, 0x41, 0x7F];
-      for (let col = 0; col < pattern.length; col++) {
-        let bits = pattern[col];
-        for (let row = 0; row < 8; row++) {
-          if ((bits >> row) & 1) {
-            ctxGrid[startX + col]?.[startY + row] && (ctxGrid[startX + col][startY + row] = true);
+      canvas.width = cols * (dotSize + gap) + gap;
+      canvas.height = rows * (dotSize + gap) + gap;
+
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const grid = Array.from({ length: cols }, () => Array(rows).fill(false));
+
+      drawTextOnGrid(grid, line1Input.value, 1, alignSelect.value, cols);
+      drawTextOnGrid(grid, line2Input.value, 10, alignSelect.value, cols);
+
+      for (let c = 0; c < cols; c++) {
+        for (let r = 0; r < rows; r++) {
+          const x = gap + c * (dotSize + gap);
+          const y = gap + r * (dotSize + gap);
+          ctx.fillStyle = grid[c][r] ? colorOnInput.value : '#181200';
+          ctx.fillRect(x, y, dotSize, dotSize);
+        }
+      }
+    }
+
+    function drawTextOnGrid(grid, text, startY, align, totalCols) {
+      let totalWidth = 0;
+      for (let char of text) {
+        if (customFont && customFont[char]) {
+          totalWidth += customFont[char].width + 1;
+        } else {
+          totalWidth += 6;
+        }
+      }
+
+      let startX = 1;
+      if (align === 'center') startX = Math.max(0, Math.floor((totalCols - totalWidth) / 2));
+      if (align === 'right') startX = Math.max(0, totalCols - totalWidth - 1);
+
+      let curX = startX;
+      for (let char of text) {
+        if (curX >= totalCols) break;
+
+        if (customFont && customFont[char]) {
+          const g = customFont[char];
+          for (let c = 0; c < g.width; c++) {
+            if (curX + c >= totalCols) break;
+            let byte = g.bitmap[c];
+            for (let r = 0; r < 8; r++) {
+              if ((byte >> r) & 1 && (startY + r) < grid[0].length) {
+                grid[curX + c][startY + r] = true;
+              }
+            }
+          }
+          curX += g.width + 1;
+        } else {
+          // Fallback vestavěný zápis
+          curX += drawFallbackChar(grid, char, curX, startY);
+        }
+      }
+    }
+
+    function drawFallbackChar(grid, char, x, y) {
+      const simpleFont = {
+        'A': [0x7E, 0x09, 0x09, 0x7E],
+        'H': [0x7F, 0x08, 0x08, 0x7F],
+        'L': [0x7F, 0x40, 0x40, 0x40],
+        'N': [0x7F, 0x04, 0x08, 0x7F],
+        'I': [0x41, 0x7F, 0x41],
+        ' ': [0x00, 0x00]
+      };
+      const pattern = simpleFont[char.toUpperCase()] || [0x7F, 0x41, 0x7F];
+      for (let c = 0; c < pattern.length; c++) {
+        for (let r = 0; r < 8; r++) {
+          if ((pattern[c] >> r) & 1 && (x + c) < grid.length && (y + r) < grid[0].length) {
+            grid[x + c][y + r] = true;
           }
         }
       }
       return pattern.length + 1;
     }
 
-    // Main Render Loop
-    function render() {
-      const cols = parseInt(colsInput.value) || 112;
-      const rows = parseInt(rowsInput.value) || 19;
-      const dotSize = parseInt(dotSizeInput.value) || 4;
-      const gap = 1;
-
-      canvas.width = cols * (dotSize + gap) + gap;
-      canvas.height = rows * (dotSize + gap) + gap;
-
-      // Background Fill
-      ctx.fillStyle = colorBgInput.value;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Grid Buffer [col][row]
-      const grid = Array.from({ length: cols }, () => Array(rows).fill(false));
-
-      const txt1 = line1Input.value;
-      const txt2 = line2Input.value;
-      const align = alignSelect.value;
-
-      // Render Line 1 (Top)
-      renderTextToGrid(grid, txt1, 1, align, cols);
-
-      // Render Line 2 (Bottom)
-      renderTextToGrid(grid, txt2, 10, align, cols);
-
-      // Draw Grid Dots
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows; r++) {
-          const x = gap + c * (dotSize + gap);
-          const y = gap + r * (dotSize + gap);
-
-          ctx.fillStyle = grid[c][r] ? colorOnInput.value : colorOffInput.value;
-          ctx.fillRect(x, y, dotSize, dotSize);
-        }
-      }
-    }
-
-    function renderTextToGrid(grid, text, startY, align, totalCols) {
-      let totalWidth = 0;
-
-      // Calculate total text width
-      for (let char of text) {
-        if (customFont[char]) {
-          totalWidth += customFont[char].width + 1;
-        } else {
-          totalWidth += 6; // default fallback width
-        }
-      }
-
-      let startX = 2;
-      if (align === 'center') {
-        startX = Math.max(0, Math.floor((totalCols - totalWidth) / 2));
-      } else if (align === 'right') {
-        startX = Math.max(0, totalCols - totalWidth - 2);
-      }
-
-      let currentX = startX;
-      for (let char of text) {
-        if (currentX >= totalCols) break;
-
-        if (customFont[char]) {
-          const glyph = customFont[char];
-          for (let col = 0; col < glyph.width; col++) {
-            if (currentX + col >= totalCols) break;
-            let byteVal = glyph.bitmap[col];
-            for (let row = 0; row < 8; row++) {
-              if ((byteVal >> row) & 1) {
-                if (grid[currentX + col] && startY + row < grid[0].length) {
-                  grid[currentX + col][startY + row] = true;
-                }
-              }
-            }
-          }
-          currentX += glyph.width + 1;
-        } else {
-          currentX += drawDefaultChar(grid, char, currentX, startY);
-        }
-      }
-    }
-
-    // HEX File Import Event
+    // HEX Import Event Handler
     hexFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = (evt) => {
         try {
-          const { memory, fontName } = parseIntelHex(event.target.result);
-          customFont = extractGlyphs(memory);
-          fontStatus.innerText = `Aktivní písmo: ${fontName}`;
+          customFont = parseHexFont(evt.target.result);
+          fontStatus.innerText = "Aktivní: Načteno HEX písmo (" + file.name + ")";
+          fontStatus.style.color = "#28a745";
           render();
         } catch (err) {
-          alert('Chyba při čtení HEX souboru: ' + err.message);
+          alert("Chyba při načítání HEX souboru: " + err.message);
+          fontStatus.innerText = "Chyba načtení souboru";
+          fontStatus.style.color = "#dc3545";
         }
       };
       reader.readAsText(file);
     });
 
-    // Event Listeners
-    [line1Input, line2Input, alignSelect, colorOnInput, colorOffInput, colorBgInput, colsInput, rowsInput, dotSizeInput].forEach(el => {
+    // PNG Export
+    document.getElementById('btnExportPng').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'buse_panel.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    // JSON Export (Uložení obsahu a rozvržení)
+    document.getElementById('btnSaveJson').addEventListener('click', () => {
+      const data = {
+        line1: line1Input.value,
+        line2: line2Input.value,
+        align: alignSelect.value,
+        cols: colsInput.value,
+        rows: rowsInput.value,
+        colorOn: colorOnInput.value,
+        dotSize: dotSizeInput.value
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.download = 'buse_projekt.json';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    });
+
+    // JSON Import (Načtení uloženého nastavení)
+    document.getElementById('jsonFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const data = JSON.parse(evt.target.result);
+          if (data.line1 !== undefined) line1Input.value = data.line1;
+          if (data.line2 !== undefined) line2Input.value = data.line2;
+          if (data.align !== undefined) alignSelect.value = data.align;
+          if (data.cols !== undefined) colsInput.value = data.cols;
+          if (data.rows !== undefined) rowsInput.value = data.rows;
+          if (data.colorOn !== undefined) colorOnInput.value = data.colorOn;
+          if (data.dotSize !== undefined) dotSizeInput.value = data.dotSize;
+          render();
+        } catch (err) {
+          alert("Chyba při načítání JSON projektu: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Eventy vstupu
+    [line1Input, line2Input, alignSelect, colsInput, rowsInput, colorOnInput, dotSizeInput].forEach(el => {
       el.addEventListener('input', render);
     });
 
-    // Initial Render
     render();
   </script>
 </body>
