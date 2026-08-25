@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUSE Panel Simulator & Hex Parser</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .panel-container {
+            background-color: #000;
+            border: 4px solid #333;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+            overflow-x: auto;
+        }
+        canvas {
+            background-color: #050505;
+            image-rendering: pixelated;
+        }
+        .controls {
+            background-color: #1e1e1e;
+            padding: 12px;
+            border-radius: 6px;
+        }
+        .field {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #ff9800;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        input[type="text"], input[type="file"], select {
+            width: 100%;
+            padding: 8px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .row-inputs {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .row-inputs input {
+            width: 50%;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn-update { background-color: #ff9800; color: #000; }
+        .btn-export { background-color: #4caf50; color: #fff; }
+        .info-box {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel-container">
+        <canvas id="buseCanvas" width="840" height="114"></canvas>
+    </div>
+
+    <div class="controls">
+        <!-- Import HEX/TXT -->
+        <div class="field">
+            <label>📁 NAHRÁT FONT (.HEX / .TXT BUSE):</label>
+            <input type="file" id="hexFileInput" accept=".hex,.txt,.fnt">
+            <div class="info-box" id="hexStatus">Žádný vlastní HEX font nenačten (používá se záložní generátor).</div>
+        </div>
+
+        <!-- Nastavení LED -->
+        <div class="field" style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>BARVA LED:</label>
+                <input type="color" id="ledColor" value="#ff9800">
+            </div>
+            <div style="flex: 1;">
+                <label>POZADÍ PANELU:</label>
+                <input type="color" id="bgColor" value="#050505">
+            </div>
+        </div>
+
+        <!-- Linka -->
+        <div class="field">
+            <label>🚏 LINKA:</label>
+            <input type="text" id="lineText" value="24">
+            <div class="row-inputs">
+                <input type="number" id="lineX" value="2" placeholder="Posun X">
+                <input type="number" id="lineY" value="1" placeholder="Posun Y">
+            </div>
+        </div>
+
+        <!-- 1. Řádek -->
+        <div class="field">
+            <label>🚍 1. ŘÁDEK:</label>
+            <input type="text" id="row1Text" value="[výluka] HLAVNÍ NÁDR.">
+            <div class="row-inputs">
+                <input type="number" id="row1X" value="34" placeholder="Posun X">
+                <input type="number" id="row1Y" value="0" placeholder="Posun Y">
+            </div>
+        </div>
+
+        <!-- 2. Řádek -->
+        <div class="field">
+            <label>🚏 2. ŘÁDEK:</label>
+            <input type="text" id="row2Text" value="přes VOZOVNA MATIČ.">
+            <div class="row-inputs">
+                <input type="number" id="row2X" value="34" placeholder="Posun X">
+                <input type="number" id="row2Y" value="9" placeholder="Posun Y">
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-update" onclick="drawPanel()">OBNOVIT MATICI</button>
+            <button class="btn-export" onclick="exportImage()">EXPORT JPG</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const CANVAS_WIDTH = 140; // Počet LED bodů na šířku
+    const CANVAS_HEIGHT = 19; // Počet LED bodů na výšku
+    const LED_SIZE = 6;       // Velikost jednoho bodu v px na canvasu
+
+    const canvas = document.getElementById('buseCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Uchování načteného fontu z HEX souboru
+    let customFontData = {};
+
+    // --- NAČTENÍ A PARSOVÁNÍ INTEL HEX SOUBORU ---
+    document.getElementById('hexFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const content = evt.target.result;
+            parseIntelHex(content);
+        };
+        reader.readAsText(file);
+    });
+
+    function parseIntelHex(text) {
+        const lines = text.split('\n');
+        let fullBytes = [];
+
+        lines.forEach(line => {
+            line = line.trim();
+            if (line.startsWith(':')) {
+                // Dekódování Intel HEX řádku
+                const numBytes = parseInt(line.substr(1, 2), 16);
+                const rectype = parseInt(line.substr(7, 2), 16);
+                
+                if (rectype === 0) { // Data record
+                    const hexData = line.substr(9, numBytes * 2);
+                    for (let i = 0; i < hexData.length; i += 2) {
+                        fullBytes.push(parseInt(hexData.substr(i, 2), 16));
+                    }
+                }
+            }
+        });
+
+        if (fullBytes.length > 0) {
+            document.getElementById('hexStatus').innerText = `Uspěšně načteno ${fullBytes.length} bajtů fontu!`;
+            // Zápis bajtů do paměti fontů
+            customFontData = extractBitmapFonts(fullBytes);
+            drawPanel();
+        } else {
+            document.getElementById('hexStatus').innerText = "Chyba: Neplatný HEX soubor.";
+        }
+    }
+
+    // Převedení souvislého pole bajtů na znázornění znaků
+    function extractBitmapFonts(bytes) {
+        let fontMap = {};
+        // Výchozí mapování ASCII znaků z BUSE datové struktury
+        for (let charCode = 32; charCode < 127; charCode++) {
+            let charOffset = (charCode - 32) * 8;
+            if (charOffset + 8 <= bytes.length) {
+                fontMap[String.fromCharCode(charCode)] = bytes.slice(charOffset, charOffset + 8);
+            }
+        }
+        return fontMap;
+    }
+
+    // --- VYKRESLENÍ MATICE BUSE ---
+    function drawPanel() {
+        const ledColor = document.getElementById('ledColor').value;
+        const bgColor = document.getElementById('bgColor').value;
+
+        // Vytvoření 2D matice bodů panelu (140x19)
+        let matrix = Array(CANVAS_HEIGHT).fill(0).map(() => Array(CANVAS_WIDTH).fill(0));
+
+        // Získání textů a pozic
+        const lineText = document.getElementById('lineText').value;
+        const lineX = parseInt(document.getElementById('lineX').value) || 0;
+        const lineY = parseInt(document.getElementById('lineY').value) || 0;
+
+        const r1Text = document.getElementById('row1Text').value;
+        const r1X = parseInt(document.getElementById('row1X').value) || 0;
+        const r1Y = parseInt(document.getElementById('row1Y').value) || 0;
+
+        const r2Text = document.getElementById('row2Text').value;
+        const r2X = parseInt(document.getElementById('row2X').value) || 0;
+        const r2Y = parseInt(document.getElementById('row2Y').value) || 0;
+
+        // Vykreslení textů do matice
+        renderTextToMatrix(matrix, lineText, lineX, lineY, true);  // Linka (Velké číslice)
+        renderTextToMatrix(matrix, r1Text, r1X, r1Y, false);       // 1. řádek
+        renderTextToMatrix(matrix, r2Text, r2X, r2Y, false);       // 2. řádek
+
+        // Vykreslení matice na Canvas
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let y = 0; y < CANVAS_HEIGHT; y++) {
+            for (let x = 0; x < CANVAS_WIDTH; x++) {
+                const px = x * LED_SIZE;
+                const py = y * LED_SIZE;
+
+                ctx.fillStyle = matrix[y][x] ? ledColor : '#1a1a1a';
+                ctx.beginPath();
+                ctx.arc(px + LED_SIZE/2, py + LED_SIZE/2, LED_SIZE/2 - 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    function renderTextToMatrix(matrix, text, startX, startY, isBig) {
+        let currentX = startX;
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+
+            // Pokud máme vlastní HEX font z disku, přednostně vykreslíme ten
+            if (customFontData[char]) {
+                const bitmap = customFontData[char];
+                for (let col = 0; col < bitmap.length; col++) {
+                    let byte = bitmap[col];
+                    for (let row = 0; row < 8; row++) {
+                        if ((byte >> row) & 1) {
+                            let targetX = currentX + col;
+                            let targetY = startY + row;
+                            if (targetX < CANVAS_WIDTH && targetY < CANVAS_HEIGHT && targetX >= 0 && targetY >= 0) {
+                                matrix[targetY][targetX] = 1;
+                            }
+                        }
+                    }
+                }
+                currentX += bitmap.length + 1;
+            } else {
+                // Generování záložního fontu v pixel-artu
+                let fontWidth = isBig ? 10 : 5;
+                let fontHeight = isBig ? 16 : 7;
+
+                for (let y = 0; y < fontHeight; y++) {
+                    for (let x = 0; x < fontWidth; x++) {
+                        if (x === 0 || x === fontWidth - 1 || y === 0 || y === fontHeight - 1 || y === Math.floor(fontHeight/2)) {
+                            let targetX = currentX + x;
+                            let targetY = startY + y;
+                            if (targetX < CANVAS_WIDTH && targetY < CANVAS_HEIGHT && targetX >= 0 && targetY >= 0) {
+                                matrix[targetY][targetX] = 1;
+                            }
+                        }
+                    }
+                }
+                currentX += fontWidth + 1;
+            }
+        }
+    }
+
+    // --- EXPORT DO JPG ---
+    function exportImage() {
+        const link = document.createElement('a');
+        link.download = 'buse-panel.jpg';
+        link.href = canvas.toDataURL('image/jpeg', 0.95);
+        link.click();
+    }
+
+    // První vykreslení po načtení
+    drawPanel();
+</script>
+
+</body>
+</html>
