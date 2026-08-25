@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>idk HEX idk</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #334155;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #38bdf8;
+            text-align: center;
+        }
+
+        .drop-zone {
+            border: 2px dashed #38bdf8;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            background-color: #334155;
+            border-color: #0ea5e9;
+        }
+
+        .drop-zone p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #0369a1;
+        }
+
+        .btn:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            text-align: center;
+            color: #38bdf8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Intel HEX Font Converter</h1>
+    
+    <div class="drop-zone" id="dropZone">
+        <p id="fileName">Přetáhni sem soubor .HEX nebo klikni pro výběr</p>
+        <input type="file" id="fileInput" accept=".hex">
+    </div>
+
+    <button class="btn" id="convertBtn" disabled>Převést a stáhnout</button>
+    <div id="status"></div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const fileNameDisplay = document.getElementById('fileName');
+    const status = document.getElementById('status');
+
+    let loadedFile = null;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        if (!file.name.toLowerCase().endsWith('.hex')) {
+            status.textContent = 'Vyber platný soubor .HEX!';
+            status.style.color = '#ef4444';
+            return;
+        }
+        loadedFile = file;
+        fileNameDisplay.textContent = `Vybrán soubor: ${file.name}`;
+        status.textContent = '';
+        convertBtn.disabled = false;
+    }
+
+    function processIntelHexLine(line) {
+        line = line.trim();
+        if (!line.startsWith(':')) return line;
+
+        const byteCount = parseInt(line.substring(1, 3), 16);
+        const address = parseInt(line.substring(3, 7), 16);
+        const recordType = line.substring(7, 9);
+
+        if (recordType !== "00") return line;
+
+        const dataHex = line.substring(9, 9 + (byteCount * 2));
+        const dataBytes = [];
+        for (let i = 0; i < dataHex.length; i += 2) {
+            dataBytes.push(parseInt(dataHex.substring(i, i + 2), 16));
+        }
+
+        // 1. Úprava hlavičky (0x0000 a 0x0020)
+        if (address === 0x0000 && dataBytes.length >= 28) {
+            dataBytes[12] = 0xE3;
+            dataBytes[13] = 0x01;
+            dataBytes[14] = 0x05;
+            dataBytes[15] = 0x0A;
+        } else if (address === 0x0020 && dataBytes.length >= 12) {
+            dataBytes[8] = 0x1C;
+            dataBytes[9] = 0x8B;
+            dataBytes[10] = 0xE3;
+            dataBytes[11] = 0x01;
+        }
+
+        // 2. Úprava výšek/atributů znaků
+        const validHeights = [0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12, 0x13, 0x15, 0x18, 0x1B];
+        let idx = 0;
+        while (idx < dataBytes.length) {
+            if (idx + 2 < dataBytes.length && validHeights.includes(dataBytes[idx + 1])) {
+                dataBytes[idx + 1] = Math.min(0x1F, dataBytes[idx + 1] + 2);
+                idx += 2;
+            } else {
+                idx++;
+            }
+        }
+
+        // Prepočet checksumu
+        let sum = byteCount + (address >> 8) + (address & 0xFF) + parseInt(recordType, 16);
+        let updatedHex = '';
+        for (let b of dataBytes) {
+            sum += b;
+            updatedHex += b.toString(16).padStart(2, '0').toUpperCase();
+        }
+
+        const newChecksum = ((~sum + 1) & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+        const bcHex = byteCount.toString(16).padStart(2, '0').toUpperCase();
+        const addrHex = address.toString(16).padStart(4, '0').toUpperCase();
+
+        return `:${bcHex}${addrHex}${recordType}${updatedHex}${newChecksum}`;
+    }
+
+    convertBtn.addEventListener('click', () => {
+        if (!loadedFile) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const lines = e.target.result.split(/\r?\n/);
+            const convertedLines = lines.map(line => line.trim() ? processIntelHexLine(line) : '');
+            const outputText = convertedLines.join('\n');
+
+            // Stažení výstupního souboru
+            const blob = new Blob([outputText], { type: 'text/plain' });
+            const downloadUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = loadedFile.name.replace('.hex', '_converted.hex');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(downloadUrl);
+
+            status.textContent = 'Převod dokončen! Soubor byl stažen.';
+            status.style.color = '#4ade80';
+        };
+
+        reader.readAsText(loadedFile);
+    });
+</script>
+
+</body>
+</html>
