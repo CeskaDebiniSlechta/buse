@@ -14,6 +14,7 @@
             --border-color: #2f2f2f;
             --accent-cyan: #00ffcc;
             --danger-color: #e63946;
+            --success-color: #2a9d8f;
         }
 
         * {
@@ -35,10 +36,10 @@
 
         header {
             background: #1a1a1a;
-            padding: 12px 20px;
+            padding: 10px 16px;
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
             border-bottom: 2px solid var(--border-color);
             z-index: 10;
@@ -66,7 +67,8 @@
         .control-group-wrapper {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
+            align-items: center;
         }
 
         .control-box {
@@ -74,7 +76,7 @@
             flex-direction: column;
             justify-content: center;
             background: var(--input-bg);
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
         }
@@ -82,9 +84,9 @@
         .control-box label {
             font-weight: 700;
             color: #8892b0;
-            font-size: 10px;
+            font-size: 9px;
             text-transform: uppercase;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             letter-spacing: 0.5px;
         }
 
@@ -107,7 +109,7 @@
         input[type="range"] {
             padding: 0;
             cursor: pointer;
-            width: 80px;
+            width: 70px;
         }
         
         select {
@@ -116,10 +118,33 @@
         }
 
         input[type="color"] {
-            width: 34px;
+            width: 32px;
             height: 24px;
             cursor: pointer;
             padding: 0;
+        }
+
+        .btn-toggle-lock {
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        .btn-toggle-lock.locked {
+            background: var(--danger-color);
+            border-color: #ff5252;
+        }
+
+        .btn-toggle-lock.unlocked {
+            background: var(--success-color);
+            border-color: #43aa8b;
         }
 
         #toolStatus {
@@ -127,10 +152,10 @@
             color: var(--accent-cyan);
             margin-left: auto;
             background: #001a14;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 6px;
             border: 1px solid #004d3d;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 0.5px;
         }
 
@@ -147,7 +172,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 30px;
+            padding: 20px;
             overflow: auto;
             background: radial-gradient(circle, #202020 0%, #030303 100%);
         }
@@ -166,6 +191,11 @@
         canvas {
             display: block;
             image-rendering: pixelated;
+            cursor: crosshair;
+        }
+
+        canvas.is-locked {
+            cursor: not-allowed !important;
         }
 
         .sidebar-layers {
@@ -179,7 +209,7 @@
         }
 
         .sidebar-title {
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #a0aec0;
@@ -245,10 +275,10 @@
         footer {
             background: var(--ui-bg);
             border-top: 2px solid var(--border-color);
-            padding: 20px;
+            padding: 15px 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             box-shadow: 0 -10px 35px rgba(0,0,0,0.8);
             z-index: 5;
         }
@@ -256,13 +286,13 @@
         .editor-grid {
             display: grid;
             grid-template-columns: 110px 2fr 60px 110px 80px 130px;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
         }
 
         .grid-header {
             font-weight: 800;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             color: #718096;
             letter-spacing: 1px;
@@ -271,9 +301,9 @@
         }
 
         .editor-grid input[type="text"] {
-            padding: 8px 12px;
-            font-size: 13px;
-            border-radius: 5px;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 4px;
             background: #000000;
             color: #ffffff;
             border: 1px solid #3a3a3a;
@@ -287,7 +317,7 @@
 
         .label-tag {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             color: #cbd5e0;
             display: flex;
@@ -297,7 +327,7 @@
 
         .coordinate-inputs {
             display: flex;
-            gap: 6px;
+            gap: 4px;
         }
 
         .coordinate-inputs div {
@@ -306,54 +336,55 @@
             background: #000000;
             border: 1px solid #3a3a3a;
             border-radius: 4px;
-            padding: 2px 5px;
+            padding: 2px 4px;
         }
 
         .coordinate-inputs span {
-            font-size: 10px;
+            font-size: 9px;
             color: #555;
-            margin-right: 3px;
+            margin-right: 2px;
             font-weight: bold;
         }
 
         .coordinate-inputs input {
             border: none !important;
             background: transparent !important;
-            width: 30px;
+            width: 28px;
             padding: 2px 0;
             text-align: center;
             color: #fff;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .button-group {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             margin-top: 5px;
             align-items: center;
         }
 
         button.action-btn {
             flex: 1;
-            padding: 12px;
+            padding: 10px;
             font-weight: bold;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             text-transform: uppercase;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 0.5px;
             text-align: center;
         }
 
         .btn-refresh { background: var(--buse-color); color: #000000; }
         .btn-clear { background: #4a1515; color: #ffffff; border: 1px solid #631c1c; }
-        .btn-save { background: #2d3748; color: #ffffff; border: 1px solid #4a5568; }
+        .btn-save-png { background: #2b6cb0; color: #ffffff; border: 1px solid #3182ce; }
+        .btn-save-jpg { background: #2d3748; color: #ffffff; border: 1px solid #4a5568; }
 
         @media (max-width: 1024px) {
             .main-workspace { flex-direction: column; }
-            .sidebar-layers { width: 100%; height: 150px; border-left: none; border-top: 2px solid var(--border-color); }
-            .editor-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .sidebar-layers { width: 100%; height: 130px; border-left: none; border-top: 2px solid var(--border-color); }
+            .editor-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
             .grid-header { display: none; }
             body { overflow-y: auto; height: auto; }
         }
@@ -377,12 +408,12 @@
 
         <div class="control-box">
             <label for="pWidth">Šířka panelu (px):</label>
-            <input type="number" id="pWidth" value="140" min="10" max="400" style="width: 60px;">
+            <input type="number" id="pWidth" value="140" min="10" max="400" style="width: 55px;">
         </div>
         
         <div class="control-box">
             <label for="pHeight">Výška panelu (px):</label>
-            <input type="number" id="pHeight" value="19" min="5" max="120" style="width: 55px;">
+            <input type="number" id="pHeight" value="19" min="5" max="120" style="width: 50px;">
         </div>
 
         <div class="control-box">
@@ -397,30 +428,49 @@
         </div>
 
         <div class="control-box">
-            <label for="pAlphaThreshold">Citlivost vykreslení:</label>
+            <label for="pAlphaThreshold">Citlivost:</label>
             <div class="control-box-row">
                 <input type="range" id="pAlphaThreshold" min="5" max="240" value="25">
-                <span id="alphaValDisplay" style="font-size:10px; font-family:monospace; width:20px;">25</span>
+                <span id="alphaValDisplay" style="font-size:10px; font-family:monospace; width:18px;">25</span>
             </div>
         </div>
 
         <div class="control-box">
-            <label for="pColor">Hlavní barva LED:</label>
+            <label for="pColor">Hlavní LED:</label>
             <input type="color" id="pColor" value="#ff9d00">
         </div>
 
         <div class="control-box">
-            <label for="pFill">Pozadí panelu:</label>
+            <label for="pFill">Pozadí:</label>
             <input type="color" id="pFill" value="#000000">
         </div>
 
+        <!-- ŠTĚTEC & NÁSTROJE KRESLENÍ -->
         <div class="control-box">
-            <label for="pRectColor">Barva ruční výplně:</label>
+            <label for="drawMode">Režim kreslení:</label>
+            <select id="drawMode">
+                <option value="brush" selected>🖌️ Štětec</option>
+                <option value="eraser">🧽 Guma</option>
+                <option value="rect">🔲 Obdélník (2 rohy)</option>
+            </select>
+        </div>
+
+        <div class="control-box">
+            <label for="brushSize">Velikost štětce:</label>
+            <input type="number" id="brushSize" value="1" min="1" max="10" style="width: 45px;">
+        </div>
+
+        <div class="control-box">
+            <label for="pRectColor">Barva štětce:</label>
             <input type="color" id="pRectColor" value="#22c55e">
         </div>
+
+        <button id="lockToggleBtn" class="btn-toggle-lock unlocked" onclick="toggleLock()">
+            🔓 Štětec Odemčen
+        </button>
     </div>
 
-    <div id="toolStatus">Nástroj: Urči Roh 1 kliknutím do matice</div>
+    <div id="toolStatus">Nástroj: Štětec aktivní</div>
 </header>
 
 <div class="main-workspace">
@@ -432,11 +482,11 @@
 
     <div class="sidebar-layers">
         <div class="sidebar-title">
-            <span>Ruční výplně podkladu</span>
+            <span>Ruční kresby a výplně</span>
             <span id="layerCount" style="color:var(--buse-color)">0</span>
         </div>
         <div class="layer-list" id="layerListContainer">
-            <div class="no-layers-placeholder">Žádné ruční výplně. Kliknutím na 2 rohy v panelu vytvoříš podklad.</div>
+            <div class="no-layers-placeholder">Žádné ruční vrstvy. Použij štětec nebo vytvoř podklad kliknutím.</div>
         </div>
     </div>
 </div>
@@ -504,15 +554,16 @@
 
     <div class="button-group">
         <button class="action-btn btn-refresh" onclick="drawBuse()">Obnovit matici</button>
-        <button class="action-btn btn-clear" onclick="clearCustomRects()">Smazat výplně</button>
-        <button class="action-btn btn-save" onclick="exportPNG()">Exportovat .PNG</button>
+        <button class="action-btn btn-clear" onclick="clearCustomRects()">Smazat kresby</button>
+        <button class="action-btn btn-save-png" onclick="exportFile('png')">Export PNG</button>
+        <button class="action-btn btn-save-jpg" onclick="exportFile('jpg')">Export JPG</button>
     </div>
 </footer>
 
 <script>
 const mainCanvas = document.getElementById('buseCanvas');
 const mainCtx = mainCanvas.getContext('2d');
-const DOT_RENDER_SIZE = 6; // Rozteč pro jemné rozlišení teček
+const DOT_RENDER_SIZE = 6; 
 
 const memoryBuffer = document.createElement('canvas');
 const memCtx = memoryBuffer.getContext('2d');
@@ -522,9 +573,48 @@ const lCtx = layerCanvas.getContext('2d');
 
 let customRectsArray = [];
 let firstCornerCoords = null;
+let isDrawingState = false;
+let isLockedState = false;
 
 /**
- * Vykreslování textu s podporou pouze [vyluka]
+ * Přepínání zamknutí a odemknutí kreslení štětcem
+ */
+function toggleLock() {
+    isLockedState = !isLockedState;
+    const btn = document.getElementById('lockToggleBtn');
+    const status = document.getElementById('toolStatus');
+    
+    if (isLockedState) {
+        btn.innerText = "🔒 Štětec Zamčen";
+        btn.className = "btn-toggle-lock locked";
+        mainCanvas.classList.add('is-locked');
+        status.innerText = "🔒 Štětec je zamknutý! (Kreslení vypnuto)";
+    } else {
+        btn.innerText = "🔓 Štětec Odemčen";
+        btn.className = "btn-toggle-lock unlocked";
+        mainCanvas.classList.remove('is-locked');
+        updateToolStatusText();
+    }
+}
+
+function updateToolStatusText() {
+    if (isLockedState) return;
+    const mode = document.getElementById('drawMode').value;
+    const status = document.getElementById('toolStatus');
+    
+    if (mode === 'brush') {
+        status.innerText = "🖌️ Nástroj: Štětec (Tažením kreslíš)";
+    } else if (mode === 'eraser') {
+        status.innerText = "🧽 Nástroj: Guma (Tažením mažeš)";
+    } else {
+        status.innerText = firstCornerCoords === null ? 
+            "🔲 Nástroj: Urči Roh 1 kliknutím" : 
+            `📍 Roh 1 uložen [${firstCornerCoords.x}, ${firstCornerCoords.y}]. Klikni pro Roh 2!`;
+    }
+}
+
+/**
+ * Vykreslování textu s podporou [vyluka]
  */
 function drawBuseTextWithCustomSymbols(ctx, text, startX, startY, fontSize, fontFamily) {
     ctx.textBaseline = "top"; 
@@ -539,7 +629,6 @@ function drawBuseTextWithCustomSymbols(ctx, text, startX, startY, fontSize, font
     segments.forEach((segment) => {
         let tagUpper = segment.toUpperCase();
 
-        /* --- JEDINÝ SPECIÁLNÍ KÓD: [VYLUKA] --- */
         if (tagUpper === '[VYLUKA]') {
             let h = fontSize;
             let cx = currentX + h / 2;
@@ -549,7 +638,6 @@ function drawBuseTextWithCustomSymbols(ctx, text, startX, startY, fontSize, font
             ctx.save();
             ctx.fillStyle = "#ffffff";
             
-            // Trojúhelník
             ctx.beginPath();
             ctx.moveTo(cx, cy - r);
             ctx.lineTo(cx + r * 0.9, cy + r * 0.9);
@@ -557,7 +645,6 @@ function drawBuseTextWithCustomSymbols(ctx, text, startX, startY, fontSize, font
             ctx.closePath();
             ctx.fill();
 
-            // Vykřičník uvnitř
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
             ctx.fillRect(cx - h * 0.06, cy - r * 0.3, h * 0.12, r * 0.7);
@@ -582,13 +669,10 @@ function calculateGridHoleColor(hexBgColor) {
     return luma < 110 ? `rgb(${r + 15}, ${g + 15}, ${b + 15})` : `rgb(${Math.max(0, r - 35)}, ${Math.max(0, g - 35)}, ${Math.max(0, b - 35)})`;
 }
 
-/**
- * Pomocná funkce pro kreslení jednotného pixelu/tečky
- */
 function drawSingleLedDot(ctx, gridX, gridY, dotSize, color, shape, isGlowing) {
     const posX = gridX * dotSize;
     const posY = gridY * dotSize;
-    const padding = 1; // Mezera mezi diodami
+    const padding = 1; 
     const activeSize = dotSize - padding;
 
     ctx.fillStyle = color;
@@ -656,17 +740,18 @@ function updateSidebarLayerList() {
     container.innerHTML = '';
     
     if (customRectsArray.length === 0) {
-        container.innerHTML = '<div class="no-layers-placeholder">Žádné ruční výplně. Kliknutím na 2 rohy v panelu vytvoříš podklad.</div>';
+        container.innerHTML = '<div class="no-layers-placeholder">Žádné ruční vrstvy. Použij štětec nebo vytvoř podklad kliknutím.</div>';
         return;
     }
     
     customRectsArray.forEach((rect, index) => {
         const item = document.createElement('div');
         item.className = 'layer-item';
+        let labelText = rect.isBrush ? `🖌️ Štětec [${rect.xMin},${rect.yMin}]` : `🔲 Blok [${rect.xMin},${rect.yMin}]➔[${rect.xMax},${rect.yMax}]`;
         item.innerHTML = `
             <div class="layer-info">
                 <div class="layer-color-indicator" style="background:${rect.color}"></div>
-                <span><strong>Výplň #${index + 1}</strong> [${rect.xMin},${rect.yMin}]➔[${rect.xMax},${rect.yMax}]</span>
+                <span><strong>Vrstva #${index + 1}</strong> ${labelText}</span>
             </div>
             <button class="btn-delete-layer" onclick="deleteSpecificLayer(${index})" title="Odebrat">×</button>
         `;
@@ -686,7 +771,7 @@ function drawBuse() {
     const globalLedColor = document.getElementById('pColor').value;
     const fillColor = document.getElementById('pFill').value;
     const alphaThreshold = parseInt(document.getElementById('pAlphaThreshold').value) || 25;
-    const dotShape = document.getElementById('pDotShape').value; // 'circle' nebo 'square'
+    const dotShape = document.getElementById('pDotShape').value; 
     
     document.getElementById('alphaValDisplay').innerText = alphaThreshold;
     document.documentElement.style.setProperty('--buse-color', globalLedColor === '#000000' ? '#ff9d00' : globalLedColor);
@@ -721,11 +806,9 @@ function drawBuse() {
     mainCanvas.width = pWidth * DOT_RENDER_SIZE;
     mainCanvas.height = pHeight * DOT_RENDER_SIZE;
 
-    // Vykreslení černého/tmavého pozadí desky
     mainCtx.fillStyle = fillColor;
     mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
     
-    // Vykreslení neaktivních zhasnutých bodů
     const inactiveHoleColor = calculateGridHoleColor(fillColor);
     for (let x = 0; x < pWidth; x++) {
         for (let y = 0; y < pHeight; y++) {
@@ -733,7 +816,6 @@ function drawBuse() {
         }
     }
 
-    // Příprava paměťového bufferu pro převod textu na diody
     memoryBuffer.width = pWidth;
     memoryBuffer.height = pHeight;
     memCtx.clearRect(0, 0, pWidth, pHeight);
@@ -758,7 +840,6 @@ function drawBuse() {
 
     const imgData = memCtx.getImageData(0, 0, pWidth, pHeight).data;
     
-    // Procházení matice a vykreslování svítících teček/čtverečků
     for (let x = 0; x < pWidth; x++) {
         for (let y = 0; y < pHeight; y++) {
             const pixelIndex = (y * pWidth + x) * 4;
@@ -784,22 +865,29 @@ function drawBuse() {
                     }
                 }
 
-                if (currentActiveRect !== null) {
+                if (currentActiveRect !== null && currentActiveRect.color !== 'transparent') {
                     drawSingleLedDot(mainCtx, x, y, DOT_RENDER_SIZE, currentActiveRect.color, dotShape, true);
                 }
             }
         }
     }
 
-    // Vykreslení značky pro výběr rohu
     if (firstCornerCoords !== null) {
         drawSingleLedDot(mainCtx, firstCornerCoords.x, firstCornerCoords.y, DOT_RENDER_SIZE, "#00ffcc", dotShape, true);
     }
 }
 
-mainCanvas.addEventListener('click', function(e) {
+/**
+ * ZPRACOVÁNÍ INTERAKCE MYŠÍ A ŠTĚTCE
+ */
+function handleCanvasPointer(e) {
+    if (isLockedState) return;
+
     const pWidth = parseInt(document.getElementById('pWidth').value) || 140;
     const pHeight = parseInt(document.getElementById('pHeight').value) || 19;
+    const mode = document.getElementById('drawMode').value;
+    const brushSize = parseInt(document.getElementById('brushSize').value) || 1;
+    const color = document.getElementById('pRectColor').value;
     
     const boundingBox = mainCanvas.getBoundingClientRect();
     const scaleFactorX = mainCanvas.width / boundingBox.width;
@@ -811,43 +899,88 @@ mainCanvas.addEventListener('click', function(e) {
     const matrixGridX = Math.floor(calculatedCanvasX / DOT_RENDER_SIZE);
     const matrixGridY = Math.floor(calculatedCanvasY / DOT_RENDER_SIZE);
 
-    if (matrixGridX >= 0 && matrixGridX < pWidth && matrixGridY >= 0 && matrixGridY < pHeight) {
+    if (matrixGridX < 0 || matrixGridX >= pWidth || matrixGridY < 0 || matrixGridY >= pHeight) return;
+
+    if (mode === 'brush' || mode === 'eraser') {
+        const radius = Math.floor(brushSize / 2);
+        const xMin = Math.max(0, matrixGridX - radius);
+        const xMax = Math.min(pWidth - 1, matrixGridX + radius);
+        const yMin = Math.max(0, matrixGridY - radius);
+        const yMax = Math.min(pHeight - 1, matrixGridY + radius);
+
+        const drawColor = mode === 'eraser' ? 'transparent' : color;
+
+        customRectsArray.push({
+            xMin, xMax, yMin, yMax,
+            color: drawColor,
+            isBrush: true
+        });
+
+        updateSidebarLayerList();
+        drawBuse();
+    } 
+    else if (mode === 'rect' && e.type === 'click') {
         if (firstCornerCoords === null) {
             firstCornerCoords = { x: matrixGridX, y: matrixGridY };
-            document.getElementById('toolStatus').innerText = `📍 Roh 1 uložen [${matrixGridX}, ${matrixGridY}]. Klikni pro Roh 2!`;
+            updateToolStatusText();
             drawBuse();
         } else {
             const xMin = Math.min(firstCornerCoords.x, matrixGridX);
             const xMax = Math.max(firstCornerCoords.x, matrixGridX);
             const yMin = Math.min(firstCornerCoords.y, matrixGridY);
             const yMax = Math.max(firstCornerCoords.y, matrixGridY);
-            const selectedFillColor = document.getElementById('pRectColor').value;
 
-            customRectsArray.push({ xMin, xMax, yMin, yMax, color: selectedFillColor });
+            customRectsArray.push({ xMin, xMax, yMin, yMax, color, isBrush: false });
             firstCornerCoords = null;
-            document.getElementById('toolStatus').innerText = `✅ Výplň [${xMin},${yMin}] až [${xMax},${yMax}] uložena.`;
-            
+            updateToolStatusText();
             updateSidebarLayerList();
             drawBuse();
         }
+    }
+}
+
+mainCanvas.addEventListener('mousedown', (e) => {
+    isDrawingState = true;
+    handleCanvasPointer(e);
+});
+
+mainCanvas.addEventListener('mousemove', (e) => {
+    if (isDrawingState && document.getElementById('drawMode').value !== 'rect') {
+        handleCanvasPointer(e);
+    }
+});
+
+window.addEventListener('mouseup', () => {
+    isDrawingState = false;
+});
+
+mainCanvas.addEventListener('click', (e) => {
+    if (document.getElementById('drawMode').value === 'rect') {
+        handleCanvasPointer(e);
     }
 });
 
 function clearCustomRects() {
     customRectsArray = [];
     firstCornerCoords = null;
-    document.getElementById('toolStatus').innerText = "🧹 Ruční výplně odstraněny.";
+    document.getElementById('toolStatus').innerText = "🧹 Všechny vrstvy smazány.";
     updateSidebarLayerList();
     drawBuse();
 }
 
-function exportPNG() {
+/**
+ * EXPORT SOUBORU (PNG / JPG)
+ */
+function exportFile(format) {
     const w = document.getElementById('pWidth').value;
     const h = document.getElementById('pHeight').value;
     const shape = document.getElementById('pDotShape').value;
+    const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
+    const ext = format === 'jpg' ? 'jpg' : 'png';
+
     const anchor = document.createElement('a');
-    anchor.download = `SIMT_BUSE_Matrix_${w}x${h}_${shape}.png`;
-    anchor.href = mainCanvas.toDataURL("image/png");
+    anchor.download = `SIMT_BUSE_Matrix_${w}x${h}_${shape}.${ext}`;
+    anchor.href = mainCanvas.toDataURL(mimeType, 0.95);
     anchor.click();
 }
 
@@ -875,9 +1008,16 @@ document.getElementById('pColor').addEventListener('input', function() {
     drawBuse();
 });
 
+document.getElementById('drawMode').addEventListener('change', () => {
+    firstCornerCoords = null;
+    updateToolStatusText();
+    drawBuse();
+});
+
 document.getElementById('pFontCategory').addEventListener('change', applyFontPresetCategory);
 
 window.onload = function() {
+    updateToolStatusText();
     drawBuse();
 };
 </script>
